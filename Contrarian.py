@@ -49,6 +49,7 @@ class Data(object):
         self.key_letter = self.key_word[0]
         self.time_label = "Trd%snt" % self.key_letter
         self.return_label = "%sretwd" % self.key_letter.capitalize()
+        self.market_value_label = "%ssmvttl" % self.key_letter.capitalize()
 
         self.data = pd.read_csv(
             path + "\\Contrarian Data\\%s\\%s.csv" % (
@@ -102,25 +103,24 @@ def data_within_period(base_time, rank_time):
         (Data.data[Data.time_label] > start_time) \
         & (Data.data[Data.time_label] < end_time)
     ]
-'''
-        [0] winner stocks codes list. (str list)
-        [1] loser stocks codes list. (str list)
-'''
+
 #%%
-def aggregate_return(data_to_aggregate):
+def aggregate_data_sum(data_to_aggregate, label):
     '''
     Parameter:
         data_to_aggregate: 
             data to be calculated it's
             aggregate return of each stocks. (pd.DataFrame)
+        label: label of column to aggregate on. (str)
     Return:
-        aggregate return of each stocks, ascending sorted. (pd.DataFrame)
+        aggregate sum of each stocks specified column, 
+        ascending sorted. (pd.DataFrame)
     '''
     # Sum up return of each stocks during rank period. 
-    aggregate_return = data_to_aggregate\
-        .groupby("Stkcd")[Data.return_label].sum()
+    aggregate_data_sum = data_to_aggregate\
+        .groupby("Stkcd")[label].sum()
     # Sort values in ascending order.
-    return aggregate_return.sort_values()
+    return aggregate_data_sum.sort_values()
 
 #%%
 class Rank(object):
@@ -133,47 +133,58 @@ class Rank(object):
         limit: top & bottom limit to define winner & loser. (int)
         percentage: top & bottom percentage to define winner & loser. (float)
     Attributes:
-        data: 
-            aggregate return of each stocks data
-            within period, ascending sorted. (pd.DataFrame)
-        limit: limit parameter. 
-        percentage: percentage limit. 
-        length: length of winner/loser list. (int)
+        data: data within period, ascending sorted. (pd.DataFrame)
+        return_data: cumulated return data of each stocks. (pd.Series)
+        winner: winner stocks codes list. (str list)
+        loser: loser stocks codes list. (str list)
     Methods:
-        winner: return winner stocks codes list. (str list)
-        loser: return loser stocks codes list. (str list)
     '''
     def __init__(
         self, 
         base_time, 
         rank_time, 
         limit=0, 
-        percentage=0.2
+        percentage=0.2, 
+        small=True, 
+        large=False
     ):
-        self.data = aggregate_return(data_within_period(
+        self.data = data_within_period(
             base_time, rank_time
-        ))
-        self.limit = limit
-        self.percentage = percentage
+        )
+        return_data = aggregate_data_sum(
+            self.data, 
+            Data.return_label
+        )
+        market_value_data = aggregate_data_sum(
+            self.data, 
+            Data.market_value_label
+        )
         
-        all_data_length = len(self.data)
+        all_data_length = len(return_data)
+
         if limit != 0:
-            self.length = limit
+            length = limit
         elif percentage:
-            self.length = floor(all_data_length * percentage)
+            length = floor(all_data_length * percentage)
+        
+        self.winner = list(return_data.index[-length:])
+        self.loser = list(return_data.index[:length])
+        
+        if not small or large:
+            pass
+        elif small:
+            small_stocks_list = list(market_value_data.index[:length])
+            self.winner = set(small_stocks_list).intersection(self.winner)
+            self.loser = set(small_stocks_list).intersection(self.loser)
+        elif large:
+            large_stocks_list = list(market_value_data.index[-length:])
+            self.winner = set(large_stocks_list).intersection(self.winner)
+            self.loser = set(large_stocks_list).intersection(self.loser)
     
-    def winner(self):
-        return list(self.data.index[-self.length:])
-    
-    def loser(self):
-        return list(self.data.index[:self.length])
+    def winner_data(self):
+        return self.data[self.data["Stkcd"].isin(self.winner)]
+
+    def loser_data(self):
+        return self.data[self.data["Stkcd"].isin(self.loser)]
 
 #%%
-def hold_data(
-    base_time, 
-    rank_time, 
-    hold_time, 
-    limit=0, 
-    percentage=0.2
-):
-    pass
