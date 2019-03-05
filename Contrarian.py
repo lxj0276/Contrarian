@@ -40,7 +40,7 @@ class Data(object):
 
         if type == "month" or "m":
             self.key_word = "month"
-            self.date_format = '%b-%y'
+            self.date_format = '%m/%d/%Y'
 
         elif type == "year" or "y":
             self.key_word = "year"
@@ -91,35 +91,82 @@ def data_within_period(base_time, rank_time):
             month: "YYYY-MM"
             year: "YYYY"
         rank_time: rank time. (int)
-        percentage: top & bottom percentage to define winner & loser. (float)       
-        limit: top & bottom limit to define winner & loser. (int)
     Return:
-        [0] winner stocks codes list. (str list)
-        [1] loser stocks codes list. (str list)
+        data within specified period. (pd.DataFrame)
     '''
     start_time = timedelta(base_time, rank_time)
     end_time = timedelta(base_time, 1)
 
     # Get data during specified period. 
-    rank_data = Data.data[
+    return Data.data[
         (Data.data[Data.time_label] > start_time) \
         & (Data.data[Data.time_label] < end_time)
     ]
-
+'''
+        [0] winner stocks codes list. (str list)
+        [1] loser stocks codes list. (str list)
+'''
+#%%
+def aggregate_return(data_to_aggregate):
+    '''
+    Parameter:
+        data_to_aggregate: 
+            data to be calculated it's
+            aggregate return of each stocks. (pd.DataFrame)
+    Return:
+        aggregate return of each stocks, ascending sorted. (pd.DataFrame)
+    '''
     # Sum up return of each stocks during rank period. 
-    aggregate_return = rank_data.groupby("Stkcd")[Data.return_label].sum()
+    aggregate_return = data_to_aggregate\
+        .groupby("Stkcd")[Data.return_label].sum()
     # Sort values in ascending order.
-    aggregate_return.sort_values(inplace=True) 
+    return aggregate_return.sort_values()
 
-    if limit != 0:
-        winner_list = list(aggregate_return.index[-limit:])
-        loser_list = list(aggregate_return.index[0:limit])
-    elif percentage:
-        length = floor(len(aggregate_return) * percentage)
-        winner_list = list(aggregate_return.index[-length:])
-        loser_list = list(aggregate_return.index[0:length])
+#%%
+class Rank(object):
+    '''
+    Parameters:
+        base_time: base time. (str)
+            month: "YYYY-MM"
+            year: "YYYY"
+        rank_time: rank time. (int)
+        limit: top & bottom limit to define winner & loser. (int)
+        percentage: top & bottom percentage to define winner & loser. (float)
+    Attributes:
+        data: 
+            aggregate return of each stocks data
+            within period, ascending sorted. (pd.DataFrame)
+        limit: limit parameter. 
+        percentage: percentage limit. 
+        length: length of winner/loser list. (int)
+    Methods:
+        winner: return winner stocks codes list. (str list)
+        loser: return loser stocks codes list. (str list)
+    '''
+    def __init__(
+        self, 
+        base_time, 
+        rank_time, 
+        limit=0, 
+        percentage=0.2
+    ):
+        self.data = aggregate_return(data_within_period(
+            base_time, rank_time
+        ))
+        self.limit = limit
+        self.percentage = percentage
+        
+        all_data_length = len(self.data)
+        if limit != 0:
+            self.length = limit
+        elif percentage:
+            self.length = floor(all_data_length * percentage)
     
-    return winner_list, loser_list
+    def winner(self):
+        return list(self.data.index[-self.length:])
+    
+    def loser(self):
+        return list(self.data.index[:self.length])
 
 #%%
 def hold_data(
