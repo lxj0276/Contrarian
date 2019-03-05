@@ -84,7 +84,7 @@ def timedelta(base_time, delta_time):
     return new_time
 
 #%%
-def rank(base_time, rank_time, limit=0, percentage=0.2):
+def data_within_period(base_time, rank_time):
     '''
     Parameters:
         base_time: base time. (str)
@@ -97,10 +97,10 @@ def rank(base_time, rank_time, limit=0, percentage=0.2):
         [0] winner stocks codes list. (str list)
         [1] loser stocks codes list. (str list)
     '''
-    start_time = timedelta(base_time, -rank_time)
+    start_time = timedelta(base_time, rank_time)
     end_time = timedelta(base_time, 1)
 
-    # Get data during rank period. 
+    # Get data during specified period. 
     rank_data = Data.data[
         (Data.data[Data.time_label] > start_time) \
         & (Data.data[Data.time_label] < end_time)
@@ -129,6 +129,4 @@ def hold_data(
     limit=0, 
     percentage=0.2
 ):
-    
-
-#%%
+    pass
