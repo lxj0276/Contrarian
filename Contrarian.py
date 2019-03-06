@@ -12,14 +12,14 @@ path = os.getcwd()
 import datetime as dt
 from dateutil.relativedelta import relativedelta
 from math import floor
-import numpy as np
-import itertools
-from scipy import stats
-import seaborn as sns
-sns.set(style="darkgrid")
-import matplotlib.pyplot as plt
-plt.rcParams['font.sans-serif'] = ['SimHei']
-plt.rcParams['axes.unicode_minus'] = False
+# import numpy as np
+# import itertools
+# from scipy import stats
+# import seaborn as sns
+# sns.set(style="darkgrid")
+# import matplotlib.pyplot as plt
+# plt.rcParams['font.sans-serif'] = ['SimHei']
+# plt.rcParams['axes.unicode_minus'] = False
 
 #%%
 class Data(object):
@@ -67,7 +67,7 @@ class Data(object):
 Data = Data("m") # use monthly data
 
 #%%
-def timedelta(base_time, delta_time):
+def time_delta(base_time, delta_time):
     '''
     Parameters:
         base_time: base time. (str)
@@ -95,8 +95,12 @@ def data_within_period(base_time, rank_time):
     Return:
         data within specified period. (pd.DataFrame)
     '''
-    start_time = timedelta(base_time, rank_time)
-    end_time = timedelta(base_time, 1)
+    if rank_time > 0:
+        start_time = time_delta(base_time, 0)
+        end_time = time_delta(base_time, rank_time+1)
+    elif rank_time <= 0:
+        start_time = time_delta(base_time, rank_time)
+        end_time = time_delta(base_time, 0+1)
 
     # Get data during specified period. 
     return Data.data[
@@ -105,36 +109,22 @@ def data_within_period(base_time, rank_time):
     ]
 
 #%%
-def aggregate_data_sum(data_to_aggregate, label):
-    '''
-    Parameter:
-        data_to_aggregate: 
-            data to be calculated it's
-            aggregate return of each stocks. (pd.DataFrame)
-        label: label of column to aggregate on. (str)
-    Return:
-        aggregate sum of each stocks specified column, 
-        ascending sorted. (pd.DataFrame)
-    '''
-    # Sum up return of each stocks during rank period. 
-    aggregate_data_sum = data_to_aggregate\
-        .groupby("Stkcd")[label].sum()
-    # Sort values in ascending order.
-    return aggregate_data_sum.sort_values()
-
-#%%
-class Rank(object):
+class Strategy(object):
     '''
     Parameters:
         base_time: base time. (str)
             month: "YYYY-MM"
             year: "YYYY"
         rank_time: rank time. (int)
+        hold_time: hold time. (int)
         limit: top & bottom limit to define winner & loser. (int)
         percentage: top & bottom percentage to define winner & loser. (float)
+        small: whether trade the smallest firms only. (bool)
+        large: whether trade the largest firms only. (bool)
     Attributes:
-        data: data within period, ascending sorted. (pd.DataFrame)
-        return_data: cumulated return data of each stocks. (pd.Series)
+        rank_data: rank data within period, ascending sorted. (pd.DataFrame)
+        hold_data: hold data within period, ascending sorted. (pd.DataFrame)
+        hold_time: same as hold_time parameter. (int)
         winner: winner stocks codes list. (str list)
         loser: loser stocks codes list. (str list)
     Methods:
@@ -142,49 +132,120 @@ class Rank(object):
     def __init__(
         self, 
         base_time, 
-        rank_time, 
+        rank_time=3, 
+        hold_time=1, 
         limit=0, 
         percentage=0.2, 
         small=True, 
         large=False
     ):
-        self.data = data_within_period(
-            base_time, rank_time
+
+        self.rank_data = data_within_period(
+            base_time, -rank_time
         )
-        return_data = aggregate_data_sum(
-            self.data, 
-            Data.return_label
+
+        rank_return_data = self.rank_data\
+            .groupby("Stkcd")[Data.return_label]\
+                .sum().sort_values()
+
+        rank_market_value_data = self.rank_data\
+            .groupby("Stkcd")[Data.market_value_label]\
+                .sum().sort_values()
+
+        self.hold_data = data_within_period(
+            base_time, hold_time
         )
-        market_value_data = aggregate_data_sum(
-            self.data, 
-            Data.market_value_label
-        )
+        self.hold_time = hold_time
+
+        # Generate winner&loser list base on rank data.
         
-        all_data_length = len(return_data)
+        all_data_length = len(rank_return_data)
 
         if limit != 0:
             length = limit
         elif percentage:
             length = floor(all_data_length * percentage)
         
-        self.winner = list(return_data.index[-length:])
-        self.loser = list(return_data.index[:length])
+        self.winner = list(rank_return_data.index[-length:])
+        self.loser = list(rank_return_data.index[:length])
         
         if not small or large:
             pass
         elif small:
-            small_stocks_list = list(market_value_data.index[:length])
-            self.winner = set(small_stocks_list).intersection(self.winner)
-            self.loser = set(small_stocks_list).intersection(self.loser)
+            small_stocks_list = list(rank_market_value_data.index[:length])
+            self.winner = list(set(small_stocks_list)\
+                .intersection(self.winner))
+            self.loser = list(set(small_stocks_list)\
+                .intersection(self.loser))
         elif large:
-            large_stocks_list = list(market_value_data.index[-length:])
-            self.winner = set(large_stocks_list).intersection(self.winner)
-            self.loser = set(large_stocks_list).intersection(self.loser)
+            large_stocks_list = list(rank_market_value_data.index[-length:])
+            self.winner = list(set(large_stocks_list)\
+                .intersection(self.winner))
+            self.loser = list(set(large_stocks_list)\
+                .intersection(self.loser))
     
-    def winner_data(self):
-        return self.data[self.data["Stkcd"].isin(self.winner)]
+    def rank_winner_data(self):
+        '''
+        Return winner data during rank period. (pd.DataFrame)
+        '''
+        return self.rank_data[self.rank_data["Stkcd"].isin(self.winner)]
 
-    def loser_data(self):
-        return self.data[self.data["Stkcd"].isin(self.loser)]
+    def rank_loser_data(self):
+        '''
+        Return loser data during rank period. (pd.DataFrame)
+        '''
+        return self.rank_data[self.rank_data["Stkcd"].isin(self.loser)]
+    
+    def rank_winner_return(self):
+        '''
+        Return winner average return during rank period. (pd.DataFrame)
+        '''
+        return pd.DataFrame(
+            self.rank_winner_data()\
+                .groupby(Data.time_label)\
+                    [Data.return_label].mean()
+        )
+    
+    def rank_loser_return(self):
+        '''
+        Return loser average return during rank period. (pd.DataFrame)
+        '''
+        return pd.DataFrame(
+            self.rank_loser_data()\
+                .groupby(Data.time_label)\
+                    [Data.return_label].mean()
+        )
+    
+    def hold_winner_data(self):
+        '''
+        Return winner data during hold period. (pd.DataFrame)
+        '''
+        return self.hold_data[self.hold_data["Stkcd"].isin(self.winner)]
+    
+    def hold_loser_data(self):
+        '''
+        Return loser data during hold period. (pd.DataFrame)
+        '''
+        return self.hold_data[self.hold_data["Stkcd"].isin(self.loser)]
+    
+    def hold_winner_return(self):
+        '''
+        Return winner average return during rank period. (pd.DataFrame)
+        '''
+        return pd.DataFrame(
+            self.hold_winner_data()\
+                .groupby(Data.time_label)\
+                    [Data.return_label].mean()
+        )
+    
+    def hold_loser_return(self):
+        '''
+        Return loser average return during rank period. (pd.DataFrame)
+        '''
+        return pd.DataFrame(
+            self.hold_loser_data()\
+                .groupby(Data.time_label)\
+                    [Data.return_label].mean()
+        )
 
 #%%
