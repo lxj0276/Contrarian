@@ -67,6 +67,22 @@ class Data(object):
 Data = Data("m") # use monthly data
 
 #%%
+class Other_Data(object):
+    '''
+    '''
+    def __init__(self):
+        self.st_data = pd.read_csv(
+            path + "\\Contrarian Data\\ST\\ST.csv"
+        )
+        self.st_list = list(self.st_data["Stkcd"].unique())
+        self.list_data = pd.read_csv(
+            path + "\\Contrarian Data\\list\\list.csv"
+        )
+
+#%%
+Other_Data().st_list
+
+#%%
 def time_delta(base_time, delta_time):
     '''
     Parameters:
@@ -96,11 +112,11 @@ def data_within_period(base_time, rank_time):
         data within specified period. (pd.DataFrame)
     '''
     if rank_time > 0:
-        start_time = time_delta(base_time, 0)
-        end_time = time_delta(base_time, rank_time+1)
+        start_time = time_delta(base_time, 0-1)
+        end_time = time_delta(base_time, rank_time)
     elif rank_time <= 0:
-        start_time = time_delta(base_time, rank_time)
-        end_time = time_delta(base_time, 0+1)
+        start_time = time_delta(base_time, rank_time-1)
+        end_time = time_delta(base_time, 0)
 
     # Get data during specified period. 
     return Data.data[
@@ -137,7 +153,8 @@ class Strategy(object):
         limit=0, 
         percentage=0.2, 
         small=True, 
-        large=False
+        large=False, 
+        ST=False, 
     ):
 
         self.rank_data = data_within_period(
@@ -247,5 +264,46 @@ class Strategy(object):
                 .groupby(Data.time_label)\
                     [Data.return_label].mean()
         )
+
+#%%
+def backtest(
+    start="2018-09", 
+    end="2019-01", 
+    rank_time=3, 
+    hold_time=1, 
+    limit=0, 
+    percentage=0.2, 
+    small=True, 
+    large=False
+):
+    return_dataframe = Strategy(
+        start, rank_time, hold_time
+    ).hold_loser_return()
+    
+    last_date = return_dataframe.index[-1]
+    end_date = pd.to_datetime(end)
+
+    while last_date < end_date:
+        last_date = last_date.strftime("%Y-%m")
+        next_start_time = time_delta(last_date, 1)
+        next_return_dataframe = Strategy(
+            next_start_time, rank_time, hold_time
+        ).hold_loser_return()
+        return_dataframe = pd.concat([
+            return_dataframe, 
+            next_return_dataframe
+        ])
+    
+    return return_dataframe
+
+#%%
+backtest()
+
+#%%
+pd.concat([now, next])
+
+#%%
+# pd.to_datetime("2018-12", format = "%Y-%m")
+pd.to_datetime("2018-12")
 
 #%%
