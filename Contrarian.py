@@ -69,6 +69,10 @@ Data = Data("m") # use monthly data
 #%%
 class Other_Data(object):
     '''
+    Attributes:
+        st_data: ST data. (pd.DataFrame)
+        st_list: ST stocks codes list. (int64 list)
+        list_data: stocks' listing data. (pd.DataFrame)
     '''
     def __init__(self):
         self.st_data = pd.read_csv(
@@ -78,9 +82,6 @@ class Other_Data(object):
         self.list_data = pd.read_csv(
             path + "\\Contrarian Data\\list\\list.csv"
         )
-
-#%%
-Other_Data().st_list
 
 #%%
 def time_delta(base_time, delta_time):
@@ -147,7 +148,7 @@ class Strategy(object):
     '''
     def __init__(
         self, 
-        base_time, 
+        base_time="2014-03", 
         rank_time=3, 
         hold_time=1, 
         limit=0, 
@@ -172,7 +173,13 @@ class Strategy(object):
         self.hold_data = data_within_period(
             base_time, hold_time
         )
+        self.rank_time = rank_time
         self.hold_time = hold_time
+        self.limit = limit
+        self.percentage = percentage
+        self.small = small
+        self.large = large
+        self.ST = ST
 
         # Generate winner&loser list base on rank data.
         
@@ -200,6 +207,14 @@ class Strategy(object):
                 .intersection(self.winner))
             self.loser = list(set(large_stocks_list)\
                 .intersection(self.loser))
+            
+        if not ST:
+            self.winner = [
+                x for x in self.winner if x not in Other_Data().st_list
+            ]
+            self.loser = [
+                x for x in self.loser if x not in Other_Data().st_list
+            ]
     
     def rank_winner_data(self):
         '''
@@ -268,7 +283,7 @@ class Strategy(object):
 #%%
 def backtest(
     start="2018-09", 
-    end="2019-01", 
+    end="2019-02", 
     rank_time=3, 
     hold_time=1, 
     limit=0, 
@@ -293,17 +308,26 @@ def backtest(
             return_dataframe, 
             next_return_dataframe
         ])
+        last_date = return_dataframe.index[-1]
+    
+    return_dataframe["Equity"] = (return_dataframe + 1)\
+        .cumprod()*100
     
     return return_dataframe
 
 #%%
-backtest()
+def cumulated_return(backtest):
+    equity = backtest["Equity"]
+    return (equity[-1]/equity[0]) - 1
 
 #%%
-pd.concat([now, next])
+backtest = backtest()
 
 #%%
-# pd.to_datetime("2018-12", format = "%Y-%m")
-pd.to_datetime("2018-12")
+cumulated_return(backtest)
+
+#%%
+cum_prod = (backtest["Mretwd"]+1).cumprod()
+cum_prod[-1] - cum_prod[0]
 
 #%%
