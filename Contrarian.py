@@ -126,54 +126,34 @@ def data_within_period(base_time, rank_time):
     ]
 
 #%%
-def strategy(
-    base_time, 
-    rank_time=3, 
-    hold_time=1, 
-    limit=0, 
-    percentage=0.2, 
-    small=True, 
-    large=False, 
-    ST=False
-):
-    '''
-    Parameters:
-        base_time: base time. (str)
-            month: "YYYY-MM"
-            year: "YYYY"
-        rank_time: rank time. (int)
-        hold_time: hold time. (int)
-        limit: top & bottom limit to define winner & loser. (int)
-        percentage: top & bottom percentage to define winner & loser. (float)
-        small: whether trade the smallest firms only. (bool)
-        large: whether trade the largest firms only. (bool)
-    Return:
-        Strategy class that use the parameters upon. (Strategy)
-    '''
-    class Strategy(object):
+class Strategy(object):
         '''
+        Parameters:
+            base_time: base time. (str)
+                month: "YYYY-MM"
+                year: "YYYY"
+            rank_time: rank time. (int)
+            hold_time: hold time. (int)
+            limit: top & bottom limit to define winner & loser. (int)
+            percentage: top & bottom percentage to define winner & loser. (float)
+            loser: whether trade loser. (bool)
+            winner: whether trade winner. (bool)
+            small: whether trade the smallest firms only. (bool)
+            large: whether trade the largest firms only. (bool)
         Attributes:
             rank_data: rank data within period, ascending sorted. (pd.DataFrame)
             hold_data: hold data within period, ascending sorted. (pd.DataFrame)
             winner: winner stocks codes list. (str list)
             loser: loser stocks codes list. (str list)
         Methods: 
-            rank_winner_data: 
-                Return winner data during rank period. (pd.DataFrame)
-            rank_loser_data:
-                Return loser data during rank period. (pd.DataFrame)
-            rank_winner_return:
-                Return winner average return during rank period. (pd.DataFrame)
-            rank_loser_return:
-                Return loser average return during rank period. (pd.DataFrame)
-            hold_winner_data:
-                Return winner data during hold period. (pd.DataFrame)
-            hold_loser_data:
-                Return loser data during hold period. (pd.DataFrame)
-            hold_winner_return:
-                Return winner average return during rank period. (pd.DataFrame)
-            hold_loser_return:
-                Return loser average return during rank period. (pd.DataFrame)
+            rank_data: 
+                Return data during rank period. (pd.DataFrame)
+            rank_return:
+                Return average return during rank period. (pd.DataFrame)
+            hold_data:
+                Return data during hold period. (pd.DataFrame)
+            hold_return:
+                Return average return during rank period. (pd.DataFrame)
         '''
         def __init__(
             self, 
@@ -182,6 +162,8 @@ def strategy(
             hold_time=1, 
             limit=0, 
             percentage=0.2, 
+            loser=True, 
+            winner=False, 
             small=True, 
             large=False, 
             ST=False, 
@@ -212,155 +194,77 @@ def strategy(
             elif percentage:
                 length = floor(all_data_length * percentage)
             
-            self.winner = list(rank_return_data.index[-length:])
-            self.loser = list(rank_return_data.index[:length])
+            if winner:
+                self.portfolio = list(rank_return_data.index[-length:])
+            elif loser:
+                self.portfolio = list(rank_return_data.index[:length])
             
             if not small or large:
                 pass
+
             elif small:
                 small_stocks_list = list(rank_market_value_data.index[:length])
-                self.winner = list(set(small_stocks_list)\
-                    .intersection(self.winner))
-                self.loser = list(set(small_stocks_list)\
-                    .intersection(self.loser))
+                self.portfolio = list(set(small_stocks_list)\
+                    .intersection(self.portfolio))
+
             elif large:
                 large_stocks_list = list(rank_market_value_data.index[-length:])
-                self.winner = list(set(large_stocks_list)\
-                    .intersection(self.winner))
-                self.loser = list(set(large_stocks_list)\
-                    .intersection(self.loser))
+                self.portfolio = list(set(large_stocks_list)\
+                    .intersection(self.portfolio))
                 
             if not ST:
-                self.winner = [
-                    x for x in self.winner if x not in Other_Data().st_list
-                ]
-                self.loser = [
-                    x for x in self.loser if x not in Other_Data().st_list
+                self.portfolio = [
+                    x for x in self.portfolio if x not in Other_Data().st_list
                 ]
         
-        def rank_winner_data(self):
-            return self.rank_data[self.rank_data["Stkcd"].isin(self.winner)]
-
-        def rank_loser_data(self):
-            return self.rank_data[self.rank_data["Stkcd"].isin(self.loser)]
+        def get_rank_data(self):
+            return self.rank_data[self.rank_data["Stkcd"].isin(self.portfolio)]
         
-        def rank_winner_return(self):
+        def get_rank_return(self):
             return pd.DataFrame(
-                self.rank_winner_data()\
+                self.get_rank_data()\
                     .groupby(Data.time_label)\
                         [Data.return_label].mean()
             )
         
-        def rank_loser_return(self):
+        def get_hold_data(self):
+            return self.hold_data[self.hold_data["Stkcd"].isin(self.portfolio)]
+        
+        def get_hold_return(self):
             return pd.DataFrame(
-                self.rank_loser_data()\
+                self.get_hold_data()\
                     .groupby(Data.time_label)\
                         [Data.return_label].mean()
             )
-        
-        def hold_winner_data(self):
-            return self.hold_data[self.hold_data["Stkcd"].isin(self.winner)]
-        
-        def hold_loser_data(self):
-            return self.hold_data[self.hold_data["Stkcd"].isin(self.loser)]
-        
-        def hold_winner_return(self):
-            return pd.DataFrame(
-                self.hold_winner_data()\
-                    .groupby(Data.time_label)\
-                        [Data.return_label].mean()
-            )
-        
-        def hold_loser_return(self):
-            return pd.DataFrame(
-                self.hold_loser_data()\
-                    .groupby(Data.time_label)\
-                        [Data.return_label].mean()
-            )
-
-    return Strategy(
-        base_time, 
-        rank_time, 
-        hold_time, 
-        limit, 
-        percentage, 
-        small, 
-        large, 
-        ST
-    )
-
-#%%
-def loser_strategy(
-    base_time, 
-    rank_time, 
-    hold_time, 
-    limit, 
-    percentage, 
-    small, 
-    large, 
-    ST
-):
-    return strategy(
-        base_time, 
-        rank_time, 
-        hold_time, 
-        limit, 
-        percentage, 
-        small, 
-        large, 
-        ST
-    ).hold_loser_return()
-
-def winner_strategy(
-    base_time, 
-    rank_time, 
-    hold_time, 
-    limit, 
-    percentage, 
-    small, 
-    large, 
-    ST
-):
-    return strategy(
-        base_time, 
-        rank_time, 
-        hold_time, 
-        limit, 
-        percentage, 
-        small, 
-        large, 
-        ST
-    ).hold_winner_return()
 
 #%%
 def backtest(
     start="2018-09", 
     end="2019-02", 
-    loser=True, 
     rank_time=3, 
     hold_time=1, 
     limit=0, 
     percentage=0.2, 
+    loser=True, 
+    winner=False, 
     small=True, 
     large=False, 
     ST=False, 
     transaction_cost=True
 ):
-    if loser:
-        strategy = loser_strategy
-    else:
-        strategy = winner_strategy
     
-    return_dataframe = strategy(
+    return_dataframe = Strategy(
         start, 
         rank_time, 
         hold_time, 
         limit, 
         percentage, 
+        loser, 
+        winner, 
         small, 
         large, 
         ST
-    )
+    ).get_hold_return()
     
     last_date = return_dataframe.index[-1]
     end_date = pd.to_datetime(end)
@@ -368,16 +272,18 @@ def backtest(
     while last_date < end_date:
         last_date = last_date.strftime("%Y-%m")
         next_start_time = time_delta(last_date, 1)
-        next_return_dataframe = strategy(
+        next_return_dataframe = Strategy(
             next_start_time, 
             rank_time, 
             hold_time, 
             limit, 
             percentage, 
+            loser, 
+            winner, 
             small, 
             large, 
             ST
-        )
+        ).get_hold_return()
         return_dataframe = pd.concat([
             return_dataframe, 
             next_return_dataframe
