@@ -268,9 +268,6 @@ class Strategy(object):
             )
 
 #%%
-%time Strategy("2009-02", loser=False).get_hold_return()
-
-#%%
 def backtest(
     strategy_name="Contrarian", 
     start="2018-09", 
@@ -374,31 +371,15 @@ def backtest(
     return return_dataframe
 
 #%%
-def report_dataframe(backtest_dataframe):
-    report_dataframe = pd.DataFrame(
-        index = ["Report"], 
-        columns = list(backtest_dataframe.columns)
-    )
-
-    report_dataframe[Data.return_label][0] \
-        = backtest_dataframe[Data.return_label].mean()
-    report_dataframe["Equity"][0] \
-        = (backtest_dataframe["Equity"][-1]/100) - 1
-    report_dataframe["Benchmark"][0] \
-        = (backtest_dataframe["Benchmark"][-1]/100) - 1
-    
-    return backtest_dataframe.append(report_dataframe)
-
-#%%
 contrarian = backtest(
-    strategy_name="Small 3-1 0901-1902 200 No-ST No-Cost", 
+    strategy_name="Winner Small 3-1 0901-1902 100 No-ST No-Cost", 
     start="2009-01", 
     end="2019-02", 
     rank_time=3, 
     hold_time=1, 
-    limit=200,  
+    limit=100,  
     loser=False, 
-    winner=False, 
+    winner=True, 
     small=True, 
     large=False, 
     ST=False, 
