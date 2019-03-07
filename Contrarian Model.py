@@ -48,20 +48,35 @@ class Data(object):
         self.return_label = "%sretwd" % self.key_letter.capitalize()
         self.market_value_label = "%ssmvttl" % self.key_letter.capitalize()
 
-        self.data = pd.read_csv(
-            path + "\\Contrarian Data\\%s\\%s.csv" % (
-                self.key_word, 
-                self.key_word    
+        file_path = path + "\\Contrarian Data\\%s\\%s" \
+            % (self.key_word, self.key_word)
+
+        if os.path.isfile(file_path + ".h5"):
+            data_store = pd.HDFStore(file_path + ".h5")
+            self.data = data_store["processed " + self.key_word]
+            data_store.close()
+        
+        else:
+            self.data = pd.read_csv(file_path + ".csv")
+            self.data[self.time_label] = pd.to_datetime(
+                self.data[self.time_label], 
+                format = self.date_format
             )
-        )
-        self.data[self.time_label] = pd.to_datetime(
-            self.data[self.time_label], 
-            format = self.date_format
-        )
+            data_store = pd.HDFStore(file_path + ".h5")
+            data_store["processed " + self.key_word] = self.data
+            data_store.close()
 
 #%%
 # Apply an instance of Data class. 
-Data = Data("m") # use monthly data
+%time Data = Data("m") # use monthly data
+
+#%%
+data_store = pd.HDFStore("\\Contrarian Data\\month\\month.h5")
+data_store["processed month"] = Data.data
+data_store.close()
+
+#%%
+
 
 #%%
 class Other_Data(object):
