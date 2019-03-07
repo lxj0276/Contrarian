@@ -12,14 +12,11 @@ path = os.getcwd()
 import datetime as dt
 from dateutil.relativedelta import relativedelta
 from math import floor
-# import numpy as np
-# import itertools
-# from scipy import stats
-# import seaborn as sns
-# sns.set(style="darkgrid")
-# import matplotlib.pyplot as plt
-# plt.rcParams['font.sans-serif'] = ['SimHei']
-# plt.rcParams['axes.unicode_minus'] = False
+import seaborn as sns
+sns.set(style="darkgrid")
+import matplotlib.pyplot as plt
+plt.rcParams['font.sans-serif'] = ['SimHei']
+plt.rcParams['axes.unicode_minus'] = False
 
 #%%
 class Data(object):
@@ -82,6 +79,11 @@ class Other_Data(object):
         self.list_data = pd.read_csv(
             path + "\\Contrarian Data\\list\\list.csv"
         )
+        self.benchmark = pd.read_csv(
+            path + "\\Contrarian Data\\benchmark\\benchmark.csv"
+        )
+        self.szzs = self.benchmark[self.benchmark["Indexcd"] == 1]
+        self.hs300 = self.benchmark[self.benchmark["Indexcd"] == 300]
 
 #%%
 def time_delta(base_time, delta_time):
@@ -146,13 +148,13 @@ class Strategy(object):
             winner: winner stocks codes list. (str list)
             loser: loser stocks codes list. (str list)
         Methods: 
-            rank_data: 
+            get_rank_data: 
                 Return data during rank period. (pd.DataFrame)
-            rank_return:
+            get_rank_return:
                 Return average return during rank period. (pd.DataFrame)
-            hold_data:
+            get_hold_data:
                 Return data during hold period. (pd.DataFrame)
-            hold_return:
+            get_hold_return:
                 Return average return during rank period. (pd.DataFrame)
         '''
         def __init__(
@@ -191,8 +193,11 @@ class Strategy(object):
 
             if limit != 0:
                 length = limit
+
             elif percentage:
                 length = floor(all_data_length * percentage)
+            
+            self.portfolio = []
             
             if winner:
                 self.portfolio = list(rank_return_data.index[-length:])
@@ -203,14 +208,20 @@ class Strategy(object):
                 pass
 
             elif small:
-                small_stocks_list = list(rank_market_value_data.index[:length])
-                self.portfolio = list(set(small_stocks_list)\
-                    .intersection(self.portfolio))
+                portfolio = list(rank_market_value_data.index[:length])
+                if len(self.portfolio) == 0:
+                    self.portfolio = portfolio
+                else:
+                    self.portfolio = list(set(portfolio)\
+                        .intersection(self.portfolio))
 
             elif large:
-                large_stocks_list = list(rank_market_value_data.index[-length:])
-                self.portfolio = list(set(large_stocks_list)\
-                    .intersection(self.portfolio))
+                portfolio = list(rank_market_value_data.index[-length:])
+                if len(self.portfolio) == 0:
+                    self.portfolio = portfolio
+                else:
+                    self.portfolio = list(set(portfolio)\
+                        .intersection(self.portfolio))
                 
             if not ST:
                 self.portfolio = [
@@ -238,7 +249,24 @@ class Strategy(object):
             )
 
 #%%
+small = Strategy(
+    base_time="2018-09", 
+    limit=100, 
+    loser=False
+)
+next_small = Strategy(
+    base_time="2018-10", 
+    limit=100, 
+    loser=False
+)
+#%%
+small_data = small.get_hold_data()
+next_small_data = next_small.get_hold_data()
+#%%
+len([x for x in list(next_small_data["Stkcd"]) if x not in list(small_data["Stkcd"])])
+#%%
 def backtest(
+    strategy_name="Contrarian", 
     start="2018-09", 
     end="2019-02", 
     rank_time=3, 
@@ -297,17 +325,51 @@ def backtest(
         return_dataframe["Equity"] = (return_dataframe + 1)\
             .cumprod() * 100
     
+    hs300 = Other_Data().hs300
+    return_dataframe["Benchmark"] = list(
+        hs300[hs300["Month"].isin(list(
+            return_dataframe.index.strftime("%Y-%m")
+        ))]["Idxrtn"]
+    )
+
+    report_dataframe = pd.DataFrame(
+        index = ["Report"], 
+        columns = list(return_dataframe.columns)
+    )
+
+    report_dataframe[Data.return_label][0] \
+        = return_dataframe[Data.return_label].mean()
+    report_dataframe["Equity"][0] \
+        = (return_dataframe["Equity"][-1]/100) - 1
+    report_dataframe["Benchmark"][0] \
+        = (return_dataframe["Benchmark"][-1]/100) - 1
+    
+    return_dataframe = return_dataframe.append(report_dataframe)
+
+    return_dataframe.to_csv(
+        path + "\\Contrarian Data\\report\\" + strategy_name + ".csv"
+    )
+
+    plt.figure(figsize = (8, 5))
+    plt.plot("Equity", data = return_dataframe, label=strategy_name)
+    plt.plot("Benchmark", data = return_dataframe, label="HS300")
+    plt.legend()
+    plt.title("Equity of " + strategy_name)
+    plt.savefig(path + "\\Contrarian Plots\\" + strategy_name + ".png")
+
     return return_dataframe
 
 #%%
-def cumulated_return(backtest):
-    equity = backtest["Equity"]
-    return (equity[-1]/equity[0]) - 1
-
-#%%
-backtest = backtest()
-
-#%%
-cumulated_return(backtest)
-
-#%%
+contrarian_3_1 = backtest(
+    strategy_name="Contrarian 3-1 0901-1902 0.2 small no cost", 
+    start="2009-01", 
+    end="2019-02", 
+    rank_time=3, 
+    hold_time=1, 
+    percentage=0.2,  
+    loser=True, 
+    winner=False, 
+    small=True, 
+    large=False, 
+    transaction_cost=False
+)

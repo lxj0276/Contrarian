@@ -10,16 +10,13 @@ from math import floor
 import numpy as np
 import itertools
 from scipy import stats
+import os
 
 # 从本地磁盘读取数据
-path = r'C:\\Users\\KasperLin\\OneDrive for Business\\Work\\Quant\\Contrarian\\data'
-year_path = r'\\year\\year.csv'
-year = pd.read_csv(path + year_path)
-month_path = r'\\month\\month.csv'
-month = pd.read_csv(path + month_path)
+path = os.getcwd()
+month = pd.read_csv(path + "\\Contrarian Data\\month\\month.csv")
 
 # 清洗数据
-year['Trdynt'] = pd.to_datetime(year['Trdynt'], format = '%Y')
 month['Trdmnt'] = pd.to_datetime(month['Trdmnt'], format = '%b-%y')
 
 data = month
@@ -324,7 +321,7 @@ def strategy(
     strategy = 'l', 
     percentage = 0.2, 
     large = False, 
-    small = False, 
+    small = True, 
     trade_cost = True
 ):
 
@@ -419,3 +416,8 @@ def get_yearly_result(table):
         ret_list.append(get_year(table, table.index.year[12*i])['Return'].sum())
     df['Return'] = ret_list
     return df
+
+data = strategy(
+    start = "2018-09", 
+    end="2019-02"
+)
