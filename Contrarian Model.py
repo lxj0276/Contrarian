@@ -264,7 +264,28 @@ def backtest(
     ST=False, 
     transaction_cost=True
 ):
-    
+    '''
+    Parameters:
+        strategy_name: name of strategy. (str)
+            format like: "Loser 3-1 0901-1901 0.2 small No-ST No-Cost". 
+        start: start time. (str)
+        end: end time. (str)
+        rank_time: rank time. (int)
+        hold_time: hold time. (int)
+        limit: 
+            the top/bottom <limit> stocks 
+            will be defined as winner/loser/small/large. 
+        percentage:
+            the top/bottom <percentage> of stocks
+            will be defined as winner/loser/small/large. 
+            (percentage will only works if limit=0.)
+        loser: loser strategy. (bool)
+        winner: winner strategy. (bool)
+        small: small strategy. (bool)
+        large: large strategy. (bool)
+        ST: whether trade ST stocks. (bool)
+        transaction_cost: whether add transaction cost. (bool)
+    '''
     return_dataframe = Strategy(
         start, 
         rank_time, 
@@ -279,7 +300,7 @@ def backtest(
     ).get_hold_return()
     
     last_date = return_dataframe.index[-1]
-    end_date = pd.to_datetime(end)
+    end_date = pd.to_datetime(end, format="%Y-%m")
 
     while last_date < end_date:
         last_date = last_date.strftime("%Y-%m")
@@ -318,15 +339,15 @@ def backtest(
         .cumprod() * 100
 
     return_dataframe.to_csv(
-        path + "\\Contrarian Data\\report\\" + strategy_name + ".csv"
+        path + "\\Contrarian Report\\CTR RP Data\\" + strategy_name + ".csv"
     )
 
     plt.figure(figsize = (8, 5))
-    plt.plot("Equity", data = return_dataframe, label=strategy_name)
+    plt.plot("Equity", data = return_dataframe, label="Strategy")
     plt.plot("Benchmark", data = return_dataframe, label="HS300")
     plt.legend()
     plt.title("Equity of " + strategy_name)
-    plt.savefig(path + "\\Contrarian Plots\\" + strategy_name + ".png")
+    plt.savefig(path + "\\Contrarian Report\\CTR RP Plots\\" + strategy_name + ".png")
 
     return return_dataframe
 
@@ -348,13 +369,13 @@ def report_dataframe(backtest_dataframe):
 
 #%%
 contrarian = backtest(
-    strategy_name="Contrarian 3-1 0901-1902 0.2 small no cost", 
+    strategy_name="Small 3-1 0901-1902 0.2 small no cost", 
     start="2009-01", 
     end="2019-02", 
     rank_time=3, 
     hold_time=1, 
     percentage=0.2,  
-    loser=True, 
+    loser=False, 
     winner=False, 
     small=True, 
     large=False, 
