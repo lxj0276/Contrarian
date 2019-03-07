@@ -249,22 +249,6 @@ class Strategy(object):
             )
 
 #%%
-small = Strategy(
-    base_time="2018-09", 
-    limit=100, 
-    loser=False
-)
-next_small = Strategy(
-    base_time="2018-10", 
-    limit=100, 
-    loser=False
-)
-#%%
-small_data = small.get_hold_data()
-next_small_data = next_small.get_hold_data()
-#%%
-len([x for x in list(next_small_data["Stkcd"]) if x not in list(small_data["Stkcd"])])
-#%%
 def backtest(
     strategy_name="Contrarian", 
     start="2018-09", 
@@ -329,22 +313,9 @@ def backtest(
     return_dataframe["Benchmark"] = list(
         hs300[hs300["Month"].isin(list(
             return_dataframe.index.strftime("%Y-%m")
-        ))]["Idxrtn"]
-    )
-
-    report_dataframe = pd.DataFrame(
-        index = ["Report"], 
-        columns = list(return_dataframe.columns)
-    )
-
-    report_dataframe[Data.return_label][0] \
-        = return_dataframe[Data.return_label].mean()
-    report_dataframe["Equity"][0] \
-        = (return_dataframe["Equity"][-1]/100) - 1
-    report_dataframe["Benchmark"][0] \
-        = (return_dataframe["Benchmark"][-1]/100) - 1
-    
-    return_dataframe = return_dataframe.append(report_dataframe)
+        ))]["Idxrtn"])
+    return_dataframe["Benchmark"] = (return_dataframe["Benchmark"] + 1)\
+        .cumprod() * 100
 
     return_dataframe.to_csv(
         path + "\\Contrarian Data\\report\\" + strategy_name + ".csv"
@@ -360,7 +331,23 @@ def backtest(
     return return_dataframe
 
 #%%
-contrarian_3_1 = backtest(
+def report_dataframe(backtest_dataframe):
+    report_dataframe = pd.DataFrame(
+        index = ["Report"], 
+        columns = list(backtest_dataframe.columns)
+    )
+
+    report_dataframe[Data.return_label][0] \
+        = backtest_dataframe[Data.return_label].mean()
+    report_dataframe["Equity"][0] \
+        = (backtest_dataframe["Equity"][-1]/100) - 1
+    report_dataframe["Benchmark"][0] \
+        = (backtest_dataframe["Benchmark"][-1]/100) - 1
+    
+    return backtest_dataframe.append(report_dataframe)
+
+#%%
+contrarian = backtest(
     strategy_name="Contrarian 3-1 0901-1902 0.2 small no cost", 
     start="2009-01", 
     end="2019-02", 
