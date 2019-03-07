@@ -19,7 +19,7 @@ plt.rcParams['font.sans-serif'] = ['SimHei']
 plt.rcParams['axes.unicode_minus'] = False
 
 #%%
-class Data(object):
+class Raw_Data(object):
     '''
     Parameter:
         type: data type. (str)
@@ -47,13 +47,14 @@ class Data(object):
         self.time_label = "Trd%snt" % self.key_letter
         self.return_label = "%sretwd" % self.key_letter.capitalize()
         self.market_value_label = "%ssmvttl" % self.key_letter.capitalize()
+        self.trade_label = "%snshrtrd" % self.key_letter.capitalize()
 
         file_path = path + "\\Contrarian Data\\%s\\%s" \
             % (self.key_word, self.key_word)
 
         if os.path.isfile(file_path + ".h5"):
             data_store = pd.HDFStore(file_path + ".h5")
-            self.data = data_store["processed " + self.key_word]
+            self.data = data_store[self.key_word]
             data_store.close()
         
         else:
@@ -63,20 +64,12 @@ class Data(object):
                 format = self.date_format
             )
             data_store = pd.HDFStore(file_path + ".h5")
-            data_store["processed " + self.key_word] = self.data
+            data_store[self.key_word] = self.data
             data_store.close()
 
 #%%
 # Apply an instance of Data class. 
-%time Data = Data("m") # use monthly data
-
-#%%
-data_store = pd.HDFStore("\\Contrarian Data\\month\\month.h5")
-data_store["processed month"] = Data.data
-data_store.close()
-
-#%%
-
+Data = Raw_Data("m") # use monthly data
 
 #%%
 class Other_Data(object):
@@ -174,43 +167,50 @@ class Strategy(object):
         '''
         def __init__(
             self, 
-            base_time="2014-03", 
-            rank_time=3, 
-            hold_time=1, 
-            limit=0, 
-            percentage=0.2, 
-            loser=True, 
-            winner=False, 
-            small=True, 
-            large=False, 
-            ST=False, 
+            base_time, 
+            rank_time, 
+            hold_time, 
+            limit, 
+            percentage, 
+            loser, 
+            winner, 
+            small, 
+            large, 
+            ST
+            # trade=False
         ):
 
             self.rank_data = data_within_period(
                 base_time, -rank_time
             )
 
-            rank_return_data = self.rank_data\
-                .groupby("Stkcd")[Data.return_label]\
-                    .sum().sort_values()
-
-            rank_market_value_data = self.rank_data\
-                .groupby("Stkcd")[Data.market_value_label]\
-                    .sum().sort_values()
-
             self.hold_data = data_within_period(
                 base_time, hold_time
             )
 
-            # Generate winner&loser list base on rank data.
+            rank_return_data = self.rank_data\
+                .groupby("Stkcd")[Data.return_label]\
+                    .sum().sort_values()
+
+            if small or large:
+                rank_market_value_data = self.rank_data\
+                    .groupby("Stkcd")[Data.market_value_label]\
+                        .sum().sort_values()
             
-            all_data_length = len(rank_return_data)
+            # if trade:
+            #     trade_data = self.rank_data\
+            #         .groupby("Stkcd")[Data.trade_label]\
+            #             .sum().sort_values()
+
+            # Generate portfolio list base on rank data.
+            
+            all_stocks_length = len(rank_return_data)
 
             if limit != 0:
                 length = limit
 
             elif percentage:
-                length = floor(all_data_length * percentage)
+                length = floor(all_stocks_length * percentage)
             
             self.portfolio = []
             
@@ -218,11 +218,8 @@ class Strategy(object):
                 self.portfolio = list(rank_return_data.index[-length:])
             elif loser:
                 self.portfolio = list(rank_return_data.index[:length])
-            
-            if not small or large:
-                pass
 
-            elif small:
+            if small:
                 portfolio = list(rank_market_value_data.index[:length])
                 if len(self.portfolio) == 0:
                     self.portfolio = portfolio
@@ -246,11 +243,18 @@ class Strategy(object):
         def get_rank_data(self):
             return self.rank_data[self.rank_data["Stkcd"].isin(self.portfolio)]
         
-        def get_rank_return(self):
+        # def get_rank_return(self):
+        #     return pd.DataFrame(
+        #         self.get_rank_data()\
+        #             .groupby(Data.time_label)\
+        #                 [Data.return_label].mean()
+        #     )
+        
+        def get_rank_trade(self):
             return pd.DataFrame(
                 self.get_rank_data()\
                     .groupby(Data.time_label)\
-                        [Data.return_label].mean()
+                        [Data.trade_label].mean()
             )
         
         def get_hold_data(self):
@@ -264,13 +268,16 @@ class Strategy(object):
             )
 
 #%%
+%time Strategy("2009-02", loser=False).get_hold_return()
+
+#%%
 def backtest(
     strategy_name="Contrarian", 
     start="2018-09", 
     end="2019-02", 
     rank_time=3, 
     hold_time=1, 
-    limit=0, 
+    limit=200, 
     percentage=0.2, 
     loser=True, 
     winner=False, 
@@ -340,7 +347,7 @@ def backtest(
     
     if transaction_cost:
         return_dataframe["Equity"] = ((return_dataframe + 1)\
-            * 0.998**2).cumprod() * 100 * 0.998
+            * 0.998**2).cumprod() * 100
     else:
         return_dataframe["Equity"] = (return_dataframe + 1)\
             .cumprod() * 100
@@ -384,15 +391,16 @@ def report_dataframe(backtest_dataframe):
 
 #%%
 contrarian = backtest(
-    strategy_name="Small 3-1 0901-1902 0.2 small no cost", 
+    strategy_name="Small 3-1 0901-1902 200 No-ST No-Cost", 
     start="2009-01", 
     end="2019-02", 
     rank_time=3, 
     hold_time=1, 
-    percentage=0.2,  
+    limit=200,  
     loser=False, 
     winner=False, 
     small=True, 
     large=False, 
+    ST=False, 
     transaction_cost=False
 )
