@@ -6,8 +6,17 @@ Contrarian Strategy
 '''
 
 #%%
+import pandas as pd
+import seaborn as sns
+sns.set(style="darkgrid")
+import matplotlib.pyplot as plt
+plt.rcParams['font.sans-serif'] = ['SimHei']
+plt.rcParams['axes.unicode_minus'] = False
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
+
 #%%
-def report_dataframe(backtest_dataframe):
+def report_return_dataframe(backtest_dataframe):
     report_dataframe = pd.DataFrame(
         index = ["Report"], 
         columns = list(backtest_dataframe.columns)

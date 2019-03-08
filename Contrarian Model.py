@@ -12,13 +12,6 @@ path = os.getcwd()
 import datetime as dt
 from dateutil.relativedelta import relativedelta
 from math import floor
-import seaborn as sns
-sns.set(style="darkgrid")
-import matplotlib.pyplot as plt
-plt.rcParams['font.sans-serif'] = ['SimHei']
-plt.rcParams['axes.unicode_minus'] = False
-from pandas.plotting import register_matplotlib_converters
-register_matplotlib_converters()
 
 #%%
 class Raw_Data(object):
