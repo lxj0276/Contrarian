@@ -342,7 +342,7 @@ class Strategy(object):
             next_return_dataframe = self.get_hold_return(date)
             return_dataframe = return_dataframe.append(next_return_dataframe)
         return_dataframe.to_csv(
-            path + "\\Contrarian Report\\CTR RP Data\\" + strategy_name + ".csv"
+            path + "\\Contrarian Result\\" + strategy_name + ".csv"
         )
         return return_dataframe
 
