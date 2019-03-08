@@ -14,22 +14,42 @@ plt.rcParams['font.sans-serif'] = ['SimHei']
 plt.rcParams['axes.unicode_minus'] = False
 from pandas.plotting import register_matplotlib_converters
 register_matplotlib_converters()
+from 
 
 #%%
-def report_return_dataframe(backtest_dataframe):
+import pandas as pd
+import os
+path = os.getcwd()
+import seaborn as sns
+sns.set(style="darkgrid")
+import matplotlib.pyplot as plt
+plt.rcParams['font.sans-serif'] = ['SimHei']
+plt.rcParams['axes.unicode_minus'] = False
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
+
+#%%
+def get_report_dataframe(strategy_name):
+    return pd.read_csv(
+        path + "\\Contrarian Result\\%s.csv" % strategy_name
+    )
+
+#%%
+def report_return_dataframe(return_dataframe):
+    
     report_dataframe = pd.DataFrame(
         index = ["Report"], 
-        columns = list(backtest_dataframe.columns)
+        columns = list(return_dataframe.columns)
     )
 
     report_dataframe[Data.return_label][0] \
-        = backtest_dataframe[Data.return_label].mean()
+        = return_dataframe[Data.return_label].mean()
     report_dataframe["Equity"][0] \
-        = (backtest_dataframe["Equity"][-1]/100) - 1
+        = (return_dataframe["Equity"][-1]/100) - 1
     report_dataframe["Benchmark"][0] \
-        = (backtest_dataframe["Benchmark"][-1]/100) - 1
+        = (return_dataframe["Benchmark"][-1]/100) - 1
     
-    return backtest_dataframe.append(report_dataframe)
+    return return_dataframe.append(report_dataframe)
 
 plt.figure(figsize = (12, 8))
 plt.plot("Equity", data = return_dataframe, label="Strategy")
