@@ -311,10 +311,20 @@ class Strategy(object):
         return portfolio
 
     def get_hold_return(self, base_time): # 11 ms
-        return pd.DataFrame(
-            self.get_hold_data(base_time).groupby(Data.time_label)\
-                [Data.return_label].mean()
-        )
+        data = self.get_hold_data(base_time)
+        if data.empty:
+            hold_return = pd.DataFrame(
+                data=[0], 
+                index=[pd.to_datetime(base_time, format="%Y-%m")], 
+                columns=[Data.return_label]
+            )
+            hold_return.index.name = Data.time_label
+        else:
+            hold_return = pd.DataFrame(
+                data.groupby(Data.time_label)\
+                    [Data.return_label].mean()
+            )
+        return hold_return
     
     def get_date_list(self): 
         return [time_delta(self.start, i) for i in list(
