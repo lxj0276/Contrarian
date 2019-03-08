@@ -70,6 +70,9 @@ class Raw_Data(object):
             data_store.close()
 
 #%%
+Data = Raw_Data("m")
+
+#%%
 class Other_Data(object):
     '''
     Attributes:
@@ -108,6 +111,24 @@ def time_delta(base_time, delta_time):
     elif len(base_time) == 4: # if year
         new_time = str(int(base_time) + delta_time)
     return new_time
+
+#%%
+def time_span(start, end):
+    '''
+    Parameters:
+    ----------
+    start: start time. (str)
+    end: end time. (str)
+
+    Return: 
+    ------
+    time span. (int)
+    '''
+    start_date = dt.datetime.strptime(start, '%Y-%m')
+    end_date = dt.datetime.strptime(end, '%Y-%m')
+    length = relativedelta(end_date, start_date).years * 12 + \
+    relativedelta(end_date, start_date).months
+    return length
 
 #%%
 def data_within_period(base_time, rank_time):
@@ -178,6 +199,12 @@ class Strategy(object):
             Return: final portfolios on base time. (int list)
         get_hold_return(base_time)
             Return: average return during rank period. (pd.DataFrame)
+        backtest(strategy_name, transaction_cost)
+            Parameters:
+                strategy_name: 
+                    name of the strategy. (str)
+                    also name of csv/png file
+                transaction_cost: whether trade cost. (bool)
     '''
     def __init__(
         self, 
@@ -209,7 +236,8 @@ class Strategy(object):
         return data_within_period(base_time, -self.rank_time)
     
     def get_hold_data(self, base_time):
-        return data_within_period(base_time, self.hold_time)
+        data = data_within_period(base_time, self.hold_time)
+        return data[data["Stkcd"].isin(self.get_portfolio(base_time))]
     
     def rank_data(self, rank_data, by=Data.return_label):
         return rank_data.groupby("Stkcd")[by].sum().sort_values()
@@ -275,7 +303,7 @@ class Strategy(object):
             elif self.small or self.large:
                 portfolio = self.get_value_portfolio(base_time)
 
-        if self.ST:
+        if not self.ST:
             portfolio = [
                 x for x in portfolio if x not in Other_Data().st_list
             ]
@@ -288,55 +316,40 @@ class Strategy(object):
                 [Data.return_label].mean()
         )
     
+    def get_date_list(self): 
+        return [time_delta(self.start, i) for i in list(
+                range(0, time_span(
+                    self.start, self.end
+                ), self.hold_time)
+            )]
+    
     def backtest(
         self, 
-        strategy_name="Contrarian", 
-        transaction_cost=False
+        strategy_name="Contrarian"
     ):
-        return_dataframe = self.get_hold_return(self.start)
-
-        last_date = return_dataframe.index[-1]
-        end_date = pd.to_datetime(self.end, format="%Y-%m")
-
-        while last_date < end_date:
-            last_date = last_date.strftime("%Y-%m")
-            next_date = time_delta(last_date, 1)
-            next_dataframe = self.get_hold_return(next_date)
-            return_dataframe = pd.concat([
-                return_dataframe, 
-                next_dataframe
-            ])
-            last_date = return_dataframe.index[-1]
-        
-        if transaction_cost:
-            return_dataframe["Equity"] = ((return_dataframe + 1)\
-                * 0.998**2).cumprod() * 100
-        else:
-            return_dataframe["Equity"] = (return_dataframe + 1)\
-                .cumprod() * 100
-
-        hs300 = Other_Data().hs300
-        return_dataframe["Benchmark"] = list(
-            hs300[hs300["Month"].isin(list(
-                return_dataframe.index.strftime("%Y-%m")
-            ))]["Idxrtn"])
-
-        return_dataframe["Benchmark"] = (return_dataframe["Benchmark"] + 1)\
-            .cumprod() * 100
-
+        return_dataframe = pd.DataFrame()
+        for date in self.get_date_list():
+            next_return_dataframe = self.get_hold_return(date)
+            return_dataframe = return_dataframe.append(next_return_dataframe)
         return_dataframe.to_csv(
             path + "\\Contrarian Report\\CTR RP Data\\" + strategy_name + ".csv"
         )
-        plt.figure(figsize = (8, 5))
-        plt.plot("Equity", data = return_dataframe, label="Strategy")
-        plt.plot("Benchmark", data = return_dataframe, label="HS300")
-        plt.legend()
-        plt.title("Equity of " + strategy_name)
-        plt.savefig(path + "\\Contrarian Report\\CTR RP Plots\\" + strategy_name + ".png")
-        
         return return_dataframe
 
 #%%
-Data = Raw_Data("m").data
+strategy = Strategy(
+    start="2009-01", 
+    end="2019-02", 
+    rank_time=3, 
+    hold_time=1, 
+    limit=100, 
+    loser=False, 
+    winner=True, 
+    small=False, 
+    large=True, 
+    ST=False, 
+    priority="intersection"
+)
 
 #%%
+strategy.backtest(strategy_name="0901-1902 Loser Small 100 intersection")
