@@ -12,6 +12,13 @@ path = os.getcwd()
 import datetime as dt
 from dateutil.relativedelta import relativedelta
 from math import floor
+import seaborn as sns
+sns.set(style="darkgrid")
+import matplotlib.pyplot as plt
+plt.rcParams['font.sans-serif'] = ['SimHei']
+plt.rcParams['axes.unicode_minus'] = False
+from pandas.plotting import register_matplotlib_converters
+register_matplotlib_converters()
 
 #%%
 class Raw_Data(object):
@@ -226,7 +233,7 @@ class Strategy(object):
         self.priority = priority
     
     def get_rank_data(self, base_time): 
-        return data_within_period(base_time, -self.rank_time)
+        return data_within_period(base_time, -self.rank_time).dropna()
     
     def get_hold_data(self, base_time):
         data = data_within_period(base_time, self.hold_time)
@@ -328,16 +335,50 @@ class Strategy(object):
     
     def backtest(
         self, 
-        strategy_name="Contrarian"
+        strategy_name, 
+        transaction_cost=False
     ):
-        return_dataframe = pd.DataFrame()
+        report_dataframe = pd.DataFrame()
         for date in self.get_date_list():
             next_return_dataframe = self.get_hold_return(date)
-            return_dataframe = return_dataframe.append(next_return_dataframe)
-        return_dataframe.to_csv(
-            path + "\\Contrarian Result\\" + strategy_name + ".csv"
+            report_dataframe = report_dataframe.append(next_return_dataframe)
+
+        # report_dataframe.index = pd.to_datetime(
+        #     report_dataframe.index, 
+        #     format="%Y-%m-%d"
+        # )
+
+        if transaction_cost:
+            report_dataframe["Equity"] = ((report_dataframe + 1)\
+                * 0.998**2).cumprod() * 100
+        else:
+            report_dataframe["Equity"] = (report_dataframe + 1)\
+                .cumprod() * 100
+
+        hs300 = Other_Data().hs300
+
+        report_dataframe["Benchmark"] = list(
+            hs300[hs300["Month"].isin(list(
+                report_dataframe.index.strftime("%Y-%m")
+            ))]["Idxrtn"])
+
+        report_dataframe["Benchmark"] = (report_dataframe["Benchmark"] + 1)\
+            .cumprod() * 100
+        
+        report_dataframe.to_csv(
+            path + "\\Contrarian Result\\%s.csv" % strategy_name
         )
-        return return_dataframe
+
+        plt.figure(figsize = (12, 8))
+        plt.plot("Equity", data=report_dataframe, label="Strategy")
+        plt.plot("Benchmark", data=report_dataframe, label="HS300")
+        plt.legend()
+        plt.title("Equity of " + strategy_name)
+        plt.savefig(
+            path + "\\Contrarian Result\\%s.png" % strategy_name
+        )
+        
+        return report_dataframe
 
 #%%
 strategy = Strategy(
@@ -345,16 +386,16 @@ strategy = Strategy(
     end="2019-02", 
     rank_time=3, 
     hold_time=1, 
-    limit=100, 
+    limit=50, 
     loser=False, 
     winner=True, 
     small=False, 
     large=True, 
     ST=False, 
-    priority="intersection"
+    priority="value"
 )
 
 #%%
 strategy.backtest(
-    strategy_name="0901-1902 Loser Small 100 intersection"
+    strategy_name="0901-1902 Loser Small 50 value"
 )
