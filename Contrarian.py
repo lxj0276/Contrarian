@@ -213,6 +213,7 @@ class Strategy(object):
         rank_time=3, 
         hold_time=1, 
         limit=100, 
+        percentage=0.2, 
         loser=True, 
         winner=False, 
         small=True, 
@@ -224,6 +225,7 @@ class Strategy(object):
         self.end = end
         self.rank_time = rank_time
         self.hold_time = hold_time
+        self.percentage = percentage
         self.limit = limit
         self.loser = loser
         self.winner = winner
@@ -248,9 +250,15 @@ class Strategy(object):
             by=Data.return_label
         )
         if self.loser:
-            return list(data.index[:self.limit*multiplier])
+            if self.limit != 0:
+                return list(data.index[:self.limit*multiplier])
+            elif self.percentage != 0:
+                return list(data.index[:all_stocks_length*multiplier*self.percentage])
         elif self.winner:
-            return list(data.index[-self.limit*multiplier:])
+            if self.limit != 0:
+                return list(data.index[-self.limit*multiplier:])
+            elif self.percentage != 0:
+                return list(data.index[all_stocks_length*multiplier*self.percentage:])
 
     def get_value_portfolio(self, base_time, multiplier=1):
         data = self.rank_data(
@@ -258,9 +266,15 @@ class Strategy(object):
             by=Data.market_value_label
         )
         if self.small:
-            return list(data.index[:self.limit*multiplier])
+            if self.limit != 0:
+                return list(data.index[:self.limit*multiplier])
+            elif self.percentage != 0:
+                return list(data.index[:all_stocks_length*multiplier*self.percentage])
         elif self.large:
-            return list(data.index[-self.limit*multiplier:])            
+            if self.limit != 0:
+                return list(data.index[-self.limit*multiplier:])            
+            elif self.percentage != 0:
+                return list(data.index[all_stocks_length*multiplier*self.percentage:])
     
     def get_portfolio(self, base_time): # 35 ms
 
@@ -278,10 +292,16 @@ class Strategy(object):
                 data = self.rank_data(data, Data.market_value_label)
 
                 if self.small:
-                    portfolio = list(data.index[:self.limit])
+                    if self.limit != 0:
+                        portfolio = list(data.index[:self.limit])
+                    elif self.percentage != 0:
+                        portfolio = list(data.index[:all_stocks_length*self.percentage])
 
                 elif self.large:
-                    portfolio = list(data.index[-self.limit:])
+                    if self.limit != 0:
+                        portfolio = list(data.index[-self.limit:])
+                    elif self.percentage != 0:
+                        portfolio = list(data.index[all_stocks_length*self.percentage:])
                     
             elif self.priority == "value":
                 p1 = self.get_value_portfolio(base_time, 2)
@@ -290,10 +310,16 @@ class Strategy(object):
                 data = self.rank_data(data, Data.return_label)
 
                 if self.loser:
-                    portfolio = list(data.index[:self.limit])
+                    if self.limit != 0:
+                        portfolio = list(data.index[:self.limit])
+                    elif self.percentage != 0:
+                        portfolio = list(data.index[:all_stocks_length*self.percentage])
 
                 elif self.winner:
-                    portfolio = list(data.index[-self.limit:])
+                    if self.limit != 0:
+                        portfolio = list(data.index[-self.limit:])
+                    elif self.percentage != 0:
+                        portfolio = list(data.index[all_stocks_length*self.percentage:])
         
         elif (self.loser or self.winner) or (self.small or self.large):
 
