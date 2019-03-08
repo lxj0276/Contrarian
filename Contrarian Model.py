@@ -362,4 +362,6 @@ strategy = Strategy(
 )
 
 #%%
-strategy.backtest(strategy_name="0901-1902 Loser Small 100 intersection")
+strategy.backtest(
+    strategy_name="0901-1902 Loser Small 100 intersection"
+)
