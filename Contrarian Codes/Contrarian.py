@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: UTF-8 -*-
 '''
 @ Author: Kasper
 Created on Tuesday, March 5, 2019
@@ -14,19 +14,8 @@ from dateutil.relativedelta import relativedelta
 
 #%%
 class Raw_Data(object):
-    '''
-    Parameter:
-        type: data type. (str)
-            month: "month" or "m"
-            year: "year" or "y"
-    Attributes:
-        key_word: time (month, year, etc). (str)
-        date_format: time format. (str)
-        key_letter: first letter of key_word. (str)
-        time_label: column name of time. (str)
-        return_label: column name of return. (str)
-        data: data of certain type. (pd.DataFrame)       
-    '''
+
+
     def __init__(self, type):
 
         if type == "month" or "m":
