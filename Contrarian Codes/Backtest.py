@@ -39,7 +39,8 @@ def backtest(
     excess_return=True, 
     transaction_cost=True, 
     equity_plot=True, 
-    profit_plot=True
+    profit_plot=True, 
+    performance_report=True
 ):
     start_date = dt.strptime(start, '%Y-%m')
     end_date = dt.strptime(end, '%Y-%m')
@@ -88,12 +89,9 @@ def backtest(
     else:
         backtest_data = pd.read_csv(path + "\\Contrarian Result\\%s.csv" % strategy_name, index_col=[0])
         backtest_data.index = pd.to_datetime(backtest_data.index, format='%Y-%m')
-    
-    CAGR = round(((backtest_data["Equity"].iloc[-1])**(1/(time_span/12)) - 1) * 100, 3)
-    print("策略年化复合增长率为%s" % CAGR + "%。")
 
     if equity_plot:
-        equity_plot_filepath = path + "\\Contrarian Result\\%s.png" % strategy_name
+        equity_plot_filepath = path + "\\Contrarian Result\\Equity of %s.png" % strategy_name
         if not os.path.isfile(equity_plot_filepath):
             plt.figure(figsize=(8, 5))
             plt.plot(backtest_data.index, backtest_data["Equity"], label="Equity")
@@ -102,7 +100,7 @@ def backtest(
             plt.title("Strategy Equity V.S. HS300 Equity")
             plt.savefig(equity_plot_filepath)
     if profit_plot:
-        profit_plot_filepath = path + "\\Contrarian Result\\%s.png" % strategy_name
+        profit_plot_filepath = path + "\\Contrarian Result\\Profit of %s.png" % strategy_name
         if not os.path.isfile(profit_plot_filepath):
             plt.figure(figsize=(8, 5))
             plt.plot(backtest_data.index, backtest_data["Profit"], label="Profit")
@@ -111,5 +109,11 @@ def backtest(
             plt.legend()
             plt.title("Strategy Profit V.S. HS300 Profit")
             plt.savefig(profit_plot_filepath)
+
+    if performance_report:
+        performance = backtest_data["Equity"].calc_stats()
+        print("策略年化复合增长率为%s" % round(performance.cagr*100, 3) + "%。")
+        print("策略最大回撤为%s" % round(performance.max_drawdown*100, 3) + "%。")
+        print("策略夏普值为%s" % round(performance.daily_sharpe, 3))
 
     return backtest_data

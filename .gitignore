@@ -7,5 +7,6 @@ Contrarian Data/week
 # Folders to ignore
 Contrarian Result
 Contrarian Codes/Debug
+Contrarian Codes/__pycache__
 # Filetype to ignore. 
 *.txt
