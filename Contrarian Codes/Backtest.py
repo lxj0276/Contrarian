@@ -23,7 +23,6 @@ import ffn
 def backtest(
     start, 
     end, 
-    strategy_name, 
     loser=False, 
     winner=False, 
     small=True, 
@@ -42,6 +41,31 @@ def backtest(
     profit_plot=True, 
     performance_report=True
 ):
+    strategy_name_list = []
+    if loser or winner:
+        if loser:
+            strategy_name_list.append("Loser")
+        elif winner:
+            strategy_name_list.append("Winner")
+    if small or large:
+        if small:
+            strategy_name_list.append("Small")
+        elif large:
+            strategy_name_list.append("Large")
+    if (rank_time != 3) and (hold_time != 1):
+        strategy_name_list.append(str(rank_time) + "-" + str(hold_time))
+    strategy_name_list.append(str(limit))
+    if (loser or winner) and (small or large):
+        strategy_name_list.append(priority)
+        if priority != "intersection":
+            strategy_name_list.append(str(multiplier))
+    if ST:
+        strategy_name_list.append("includeST")
+    if not transaction_cost:
+        strategy_name_list.append("NoTransactionCost")
+    strategy_name_list.append(start[2:4] + start[-2:] + "-" + end[2:4] + end[-2:])
+    strategy_name = ' '.join(strategy_name_list)
+
     start_date = dt.strptime(start, '%Y-%m')
     end_date = dt.strptime(end, '%Y-%m')
     time_span = relativedelta(end_date, start_date).years*12 + relativedelta(end_date, start_date).months
@@ -69,10 +93,11 @@ def backtest(
             )
         if benchmark:
             hs300 = pd.read_csv(path+"\\Contrarian Data\\benchmark\\benchmark.csv")
+            hs300 = hs300[hs300["Indexcd"] == 300]
             hs300 = hs300[["Month", "Idxrtn"]]
-            hs300.columns = ["Month", "Benchmark Profit"]
-            hs300.index = pd.to_datetime(hs300["Month"], format='%Y-%m')
-            hs300 = hs300[["Benchmark Profit"]]
+            hs300.set_index("Month", inplace=True)
+            hs300.columns = ["Benchmark Profit"]
+            hs300.index = pd.to_datetime(hs300.index, format='%Y-%m')
             backtest_data = backtest_data.join(hs300)
         if excess_return:
             backtest_data["Excess Return"] = backtest_data["Profit"] - backtest_data["Benchmark Profit"]
@@ -117,3 +142,5 @@ def backtest(
         print("策略夏普值为%s" % round(performance.daily_sharpe, 3))
 
     return backtest_data
+
+data = backtest(start="2009-01", end="2019-01")

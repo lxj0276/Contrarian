@@ -5,7 +5,6 @@ Created on Tuesday, March 5, 2019
 Contrarian Strategy
 '''
 
-#%%
 import os
 path = os.getcwd()
 import itertools
@@ -14,7 +13,6 @@ from datetime import datetime as dt
 from dateutil.relativedelta import relativedelta
 from functools import partial
 
-#%%
 raw_data = pd.read_csv(path + "\\Contrarian Data\\month\\month.csv")
 time_label = "Trdmnt"
 market_capital_label = "Msmvttl"
@@ -24,7 +22,6 @@ raw_data[time_label] = pd.to_datetime(raw_data[time_label], format=time_format)
 print("读取原始月度数据为raw_data。")
 
 
-#%%
 def get_aggregate_data(base_time, delta_time, groupby_label="Stkcd", calculate_label=profit_label, portfolio_list=[]):
     if delta_time > 0:
         start = (dt.strptime(base_time, '%Y-%m') + relativedelta(months=-1)).strftime('%Y-%m')
@@ -37,7 +34,6 @@ def get_aggregate_data(base_time, delta_time, groupby_label="Stkcd", calculate_l
         data = data[data["Stkcd"].isin(portfolio_list)]
     return data.groupby(groupby_label)[calculate_label]
 
-#%%
 def get_strategy_monthly_return(
     start_time, 
     rank_time=3, 

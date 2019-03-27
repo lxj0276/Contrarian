@@ -1,6 +1,7 @@
 # Codes to ignore. 
 Contrarian Codes/Contrarian_old.py
 Contrarian Codes/Run.py
+Contrarian Codes/Debug.py
 # Data to ignore. 
 Contrarian Data/day
 Contrarian Data/week
