@@ -142,5 +142,3 @@ def backtest(
         print("策略夏普值为%s" % round(performance.daily_sharpe, 3))
 
     return backtest_data
-
-data = backtest(start="2009-01", end="2019-01")
