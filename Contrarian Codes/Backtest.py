@@ -37,8 +37,8 @@ def backtest(
     benchmark=True, 
     excess_return=True, 
     transaction_cost=True, 
-    equity_plot=True, 
-    profit_plot=True, 
+    equity_plot=False, 
+    profit_plot=False, 
     performance_report=True
 ):
     strategy_name_list = []
@@ -63,7 +63,6 @@ def backtest(
         strategy_name_list.append("includeST")
     if not transaction_cost:
         strategy_name_list.append("NoTransactionCost")
-    strategy_name_list.append(start[2:4] + start[-2:] + "-" + end[2:4] + end[-2:])
     strategy_name = ' '.join(strategy_name_list)
 
     start_date = dt.strptime(start, '%Y-%m')
