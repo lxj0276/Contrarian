@@ -4,7 +4,6 @@
 Created on Tuesday, March 5, 2019
 Contrarian Strategy
 '''
-
 import os
 path = os.getcwd()
 import itertools
