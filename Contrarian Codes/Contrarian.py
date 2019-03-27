@@ -36,14 +36,14 @@ def get_aggregate_data(base_time, delta_time, groupby_label="Stkcd", calculate_l
 
 def get_strategy_monthly_return(
     start_time, 
-    rank_time=3, 
-    hold_time=1, 
     loser=True, 
     winner=False, 
     small=True, 
     large=False, 
-    limit=200, 
-    priority="intersection", 
+    rank_time=3, 
+    hold_time=1, 
+    limit=100, 
+    priority="market_capital", 
     multiplier=2, 
     ST=False
 ):

@@ -23,7 +23,7 @@ import ffn
 def backtest(
     start, 
     end, 
-    loser=False, 
+    loser=True, 
     winner=False, 
     small=True, 
     large=False, 
