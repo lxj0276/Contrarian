@@ -72,7 +72,7 @@ def backtest(
 
     if not os.path.isfile(path + "\\Contrarian Result\\%s.csv" % strategy_name):
         backtest_data = pd.DataFrame()
-        for date in [(dt.strptime(start, '%Y-%m') + relativedelta(months=i)).strftime('%Y-%m') for i in range(time_span)]:
+        for date in [(dt.strptime(start, '%Y-%m') + relativedelta(months=i)).strftime('%Y-%m') for i in range(0, time_span, hold_time)]:
             print(date, ":")
             next_df = get_strategy_monthly_return(
                 start_time=date, 
