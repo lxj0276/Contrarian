@@ -19,8 +19,6 @@ market_capital_label = "Msmvttl"
 profit_label = "Mretwd"
 time_format = '%m/%d/%Y'
 raw_data[time_label] = pd.to_datetime(raw_data[time_label], format=time_format)
-print("读取原始月度数据为raw_data。")
-
 
 def get_aggregate_data(base_time, delta_time, groupby_label="Stkcd", calculate_label=profit_label, portfolio_list=[]):
     if delta_time > 0:
@@ -76,18 +74,14 @@ def get_strategy_monthly_return(
     if (loser or winner) and not (small or large):
         if loser:
             portfolio_list = list(rank_profit_data.index[:limit])
-            print("买入%s组合，共%s支股票。" % (profit_type, len(portfolio_list)))
         elif winner:
             portfolio_list = list(rank_profit_data.index[-limit:])
-            print("买入%s组合，共%s支股票。" % (profit_type, len(portfolio_list)))
 
     if (small or large) and not (loser or winner):
         if small:
             portfolio_list = list(rank_market_capital_data.index[:limit])
-            print("买入%s组合，共%s支股票。" % (market_capital_type, len(portfolio_list)))
         elif large:
             portfolio_list = list(rank_market_capital_data.index[-limit:])
-            print("买入%s组合，共%s支股票。" % (market_capital_type, len(portfolio_list)))
 
     if (loser or winner) and (small or large):
 
@@ -102,7 +96,6 @@ def get_strategy_monthly_return(
             elif large:
                 market_capital_list = list(rank_market_capital_data.index[-limit:])
             portfolio_list = set(profit_list).intersection(market_capital_list)
-            print("买入%s组合与%s组合的简单交集，共%s支股票。" % (profit_type, market_capital_type, len(portfolio_list)))
 
         # 收益优先。
         elif priority == "profit":
@@ -120,7 +113,6 @@ def get_strategy_monthly_return(
                 portfolio_list = list(rank_market_capital_data.index[:limit])
             elif large:
                 portfolio_list = list(rank_market_capital_data.index[-limit:])
-            print("买入%s组合与%s组合的收益优先交集，共%s支股票。" % (profit_type, market_capital_type, len(portfolio_list)))
         
         # 市值优先。
         elif priority == "market_capital":
@@ -137,12 +129,10 @@ def get_strategy_monthly_return(
                 portfolio_list = list(rank_profit_data.index[:limit])
             elif winner:
                 portfolio_list = list(rank_profit_data.index[-limit:])
-            print("买入%s组合与%s组合的市值优先交集，共%s支股票。" % (profit_type, market_capital_type, len(portfolio_list)))
     
     if not ST:
         ST_list = list(pd.read_csv(path+"\\Contrarian Data\\ST\\ST.csv")["Stkcd"].unique())
         portfolio_list = [x for x in portfolio_list if x not in ST_list]
-        print("剔除ST股票后共%s支股票。" % len(portfolio_list))
     
     hold_return_data = pd.DataFrame(get_aggregate_data(
         base_time=start_time, 
