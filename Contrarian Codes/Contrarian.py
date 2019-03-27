@@ -45,15 +45,6 @@ def get_strategy_monthly_return(
     ST=False
 ):
 
-    if loser:
-        profit_type = "输家"
-    elif winner:
-        profit_type = "赢家"
-    if small:
-        market_capital_type = "小市值"
-    elif large:
-        market_capital_type = "大市值"
-
     if loser or winner:
         rank_profit_data = get_aggregate_data(
             base_time=start_time, 
