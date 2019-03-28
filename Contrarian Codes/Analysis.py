@@ -17,8 +17,6 @@ register_matplotlib_converters()
 import ffn
 
 def analysis(
-    start="2009-01", 
-    end="2019-01", 
     loser=True, 
     winner=False, 
     small=True, 
@@ -28,6 +26,8 @@ def analysis(
     limit=100, 
     priority="market_capital", 
     multiplier=2, 
+    start="2009-01", 
+    end="2019-01", 
     ST=False, 
     equity=True, 
     benchmark=True, 
@@ -96,13 +96,9 @@ def analysis(
             performance = data["Equity with Transaction Cost"].calc_stats()
         else:
             performance = data["Equity"].calc_stats()
-        description_list = []
         print("%s 策略回测报告：" % file_name)
         print("* 年化复合增长率为%s" % round(performance.cagr*100, 3) + "%。")
         print("* 最大回撤为%s" % round(performance.max_drawdown*100, 3) + "%。")
         print("* 夏普值为%s。" % round(performance.daily_sharpe, 3))
     
     return data
-
-# 研究不同股票数量的影响。
-# 以反转因子为例。
