@@ -33,8 +33,6 @@ def analysis(
     benchmark=True, 
     excess_return=True, 
     transaction_cost=True, 
-    equity_plot=False, 
-    profit_plot=False, 
     performance_report=True, 
     store_data=False
 ):
@@ -92,29 +90,19 @@ def analysis(
                 data["Benchmark Equity with Transaction Cost"] = ((data["Benchmark Profit"]+1) * 0.998**2).cumprod()
     if store_data: 
         data.to_csv(path + "\\Contrarian Result\\%s Equity.csv" % file_name)
-
-    if equity_plot:
-        equity_plot_filepath = path + "\\Contrarian Result\\%s Equity.png" % file_name
-        if not os.path.isfile(equity_plot_filepath):
-            plt.figure(figsize=(8, 5))
-            plt.plot(data.index, data["Equity"], label="Equity")
-            plt.plot(data.index, data["Benchmark Equity"], label="Benchmark Equity")
-            plt.legend()
-            plt.title("Strategy Equity V.S. HS300 Equity")
-            plt.savefig(equity_plot_filepath)
-    if profit_plot:
-        profit_plot_filepath = path + "\\Contrarian Result\\Profit of %s.png" % file_name
-        if not os.path.isfile(profit_plot_filepath):
-            plt.figure(figsize=(8, 5))
-            plt.plot(data.index, data["Profit"], label="Profit")
-            plt.plot(data.index, data["Benchmark Profit"], label="Benchmark Profit")
-            plt.plot(data.index, data["Excess Return"], label="Excess Return")
-            plt.legend()
-            plt.title("Strategy Profit V.S. HS300 Profit")
-            plt.savefig(profit_plot_filepath)
-
+    
     if performance_report:
-        performance = data["Equity"].calc_stats()
-        print("策略年化复合增长率为%s" % round(performance.cagr*100, 3) + "%。")
-        print("策略最大回撤为%s" % round(performance.max_drawdown*100, 3) + "%。")
-        print("策略夏普值为%s" % round(performance.daily_sharpe, 3))
+        if transaction_cost:
+            performance = data["Equity with Transaction Cost"].calc_stats()
+        else:
+            performance = data["Equity"].calc_stats()
+        description_list = []
+        print("%s 策略回测报告：" % file_name)
+        print("* 年化复合增长率为%s" % round(performance.cagr*100, 3) + "%。")
+        print("* 最大回撤为%s" % round(performance.max_drawdown*100, 3) + "%。")
+        print("* 夏普值为%s。" % round(performance.daily_sharpe, 3))
+    
+    return data
+
+# 研究不同股票数量的影响。
+# 以反转因子为例。
