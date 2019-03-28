@@ -13,8 +13,8 @@ from dateutil.relativedelta import relativedelta
 from Contrarian import get_strategy_monthly_return
 
 def backtest(
-    start, 
-    end, 
+    start="2009-01", 
+    end="2019-01", 
     loser=True, 
     winner=False, 
     small=True, 
