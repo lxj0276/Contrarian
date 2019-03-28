@@ -75,5 +75,7 @@ def backtest(
     else:
         backtest_data = pd.read_csv(path + "\\Contrarian Result\\%s.csv" % strategy_name, index_col=[0])
         backtest_data.index = pd.to_datetime(backtest_data.index, format='%Y-%m')
+    
+    print("回测完成，收益率数据已保存在%s文件里。" % strategy_name)
 
     return backtest_data
