@@ -12,7 +12,7 @@ from datetime import datetime as dt
 from dateutil.relativedelta import relativedelta
 from Contrarian import get_strategy_monthly_return
 
-def backtest(
+def get_file_name(
     start="2009-01", 
     end="2019-01", 
     loser=True, 
@@ -46,7 +46,36 @@ def backtest(
             strategy_name_list.append(str(multiplier))
     if ST:
         strategy_name_list.append("includeST")
-    strategy_name = ' '.join(strategy_name_list)
+    return ' '.join(strategy_name_list)
+
+def backtest(
+    start="2009-01", 
+    end="2019-01", 
+    loser=True, 
+    winner=False, 
+    small=True, 
+    large=False, 
+    rank_time=3, 
+    hold_time=1, 
+    limit=100, 
+    priority="market_capital", 
+    multiplier=2, 
+    ST=False
+):
+    strategy_name = get_file_name(
+        start=start, 
+        end=end, 
+        loser=loser, 
+        winner=winner, 
+        small=small, 
+        large=large, 
+        rank_time=rank_time, 
+        hold_time=hold_time, 
+        limit=limit, 
+        priority=priority, 
+        multiplier=multiplier, 
+        ST=ST
+    )
 
     start_date = dt.strptime(start, '%Y-%m')
     end_date = dt.strptime(end, '%Y-%m')
