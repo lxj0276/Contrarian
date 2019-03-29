@@ -7,6 +7,7 @@ Contrarian Strategy Analysis
 import os; path = os.getcwd()
 from Backtest import get_file_name, backtest
 import pandas as pd
+import numpy as np
 import seaborn as sns
 sns.set(style="darkgrid")
 import matplotlib.pyplot as plt
@@ -52,7 +53,8 @@ def analysis(
         priority=priority, 
         multiplier=multiplier, 
         ST=ST, 
-        market_capital=market_capital
+        market_capital=market_capital, 
+        trade_volume=trade_volume
     )
     if os.path.isfile(path + "\\Contrarian Result\\%s.csv" % file_name):
         data = pd.read_csv(path + "\\Contrarian Result\\%s.csv" % file_name, index_col=[0])
@@ -82,6 +84,12 @@ def analysis(
         for i in range(1, len(data)):
             if data.iloc[i-1, 0] < 0:
                 data.iloc[i, 0] = 0
+    elif stop_loss == "trade_volume":
+        scale_down_trade_vol_par = 0.88
+        data["MA3 of Trade Vol"] = data["Trade Volume"].rolling(3).apply(lambda x: np.mean(x), raw=True)
+        for i in range(3, len(data)):
+            if data["Trade Volume"].iloc[i-1] < scale_down_trade_vol_par * data["MA3 of Trade Vol"].iloc[i-1]:
+                data["Profit"].iloc[i] = 0
     
     if benchmark:
         # 获取benchmark数据，这里是沪深300.
@@ -113,6 +121,8 @@ def analysis(
         print("%s 策略回测报告：" % file_name)
         if stop_loss == "simple":
             print("（策略经过简单止损）")
+        elif stop_loss == "trade_volume":
+            print("（策略经过交易量预测止损）")
         print("* 年化复合增长率为%s" % round(performance.cagr*100, 3) + "%。")
         print("* 最大回撤为%s" % round(performance.max_drawdown*100, 3) + "%。")
         print("* 夏普值为%s。" % round(performance.daily_sharpe, 3))

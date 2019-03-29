@@ -25,7 +25,8 @@ def get_file_name(
     priority="market_capital", 
     multiplier=2, 
     ST=False, 
-    market_capital="total"
+    market_capital="total", 
+    trade_volume=False
 ):
     strategy_name_list = []
     if loser or winner:
@@ -49,7 +50,9 @@ def get_file_name(
     if ST:
         strategy_name_list.append("includeST")
     if market_capital != "total":
-        strategy_name_list.append(market_capital)    
+        strategy_name_list.append(market_capital)
+    if trade_volume:
+        strategy_name_list.append("with_trade_volume")
     return ' '.join(strategy_name_list)
 
 def backtest(
@@ -81,7 +84,8 @@ def backtest(
         priority=priority, 
         multiplier=multiplier, 
         ST=ST, 
-        market_capital=market_capital
+        market_capital=market_capital, 
+        trade_volume=trade_volume
     )
 
     start_date = dt.strptime(start, '%Y-%m')
