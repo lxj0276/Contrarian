@@ -35,7 +35,8 @@ def analysis(
     excess_return=True, 
     transaction_cost=True, 
     performance_report=True, 
-    store_data=False
+    store_data=False, 
+    stop_loss="none"
 ):
     file_name = get_file_name(
         start=start, 
@@ -72,6 +73,14 @@ def analysis(
             market_capital=market_capital
         )
     
+    # 止损降低波动率和风险。
+    if stop_loss == "none":
+        pass
+    elif stop_loss == "simple":
+        for i in range(1, len(data)):
+            if data.iloc[i-1, 0] < 0:
+                data.iloc[i, 0] = 0
+    
     if benchmark:
         # 获取benchmark数据，这里是沪深300.
         hs300 = pd.read_csv(path + "\\Contrarian Data\\benchmark\\benchmark.csv")
@@ -100,6 +109,8 @@ def analysis(
         else:
             performance = data["Equity"].calc_stats()
         print("%s 策略回测报告：" % file_name)
+        if stop_loss == "simple":
+            print("（策略经过简单止损）")
         print("* 年化复合增长率为%s" % round(performance.cagr*100, 3) + "%。")
         print("* 最大回撤为%s" % round(performance.max_drawdown*100, 3) + "%。")
         print("* 夏普值为%s。" % round(performance.daily_sharpe, 3))
