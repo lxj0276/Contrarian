@@ -24,7 +24,8 @@ def get_file_name(
     limit=100, 
     priority="market_capital", 
     multiplier=2, 
-    ST=False
+    ST=False, 
+    market_capital="total"
 ):
     strategy_name_list = []
     if loser or winner:
@@ -43,9 +44,12 @@ def get_file_name(
     if (loser or winner) and (small or large):
         strategy_name_list.append(priority)
         if priority != "intersection":
-            strategy_name_list.append(str(multiplier))
+            if multiplier != 2:
+                strategy_name_list.append(str(multiplier))
     if ST:
         strategy_name_list.append("includeST")
+    if market_capital != "total":
+        strategy_name_list.append(market_capital)    
     return ' '.join(strategy_name_list)
 
 def backtest(
@@ -60,7 +64,8 @@ def backtest(
     limit=100, 
     priority="market_capital", 
     multiplier=2, 
-    ST=False
+    ST=False, 
+    market_capital="total"
 ):
     strategy_name = get_file_name(
         start=start, 
@@ -74,7 +79,8 @@ def backtest(
         limit=limit, 
         priority=priority, 
         multiplier=multiplier, 
-        ST=ST
+        ST=ST, 
+        market_capital=market_capital
     )
 
     start_date = dt.strptime(start, '%Y-%m')
