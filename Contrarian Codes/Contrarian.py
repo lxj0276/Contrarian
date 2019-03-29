@@ -15,8 +15,10 @@ from functools import partial
 raw_data = pd.read_csv(path + "\\Contrarian Data\\month\\month.csv")
 time_label = "Trdmnt"
 market_capital_label = "Msmvttl"
+floating_market_capital_label = "Msmvosd"
 profit_label = "Mretwd"
 time_format = '%m/%d/%Y'
+trade_volume_label = "Mnshrtrd"
 raw_data[time_label] = pd.to_datetime(raw_data[time_label], format=time_format)
 
 def get_aggregate_data(base_time, delta_time, groupby_label="Stkcd", calculate_label=profit_label, portfolio_list=[]):
@@ -42,7 +44,8 @@ def get_strategy_monthly_return(
     limit=100, 
     priority="market_capital", 
     multiplier=2, 
-    ST=False
+    ST=False, 
+    market_capital="total"
 ):
 
     if loser or winner:
@@ -52,11 +55,18 @@ def get_strategy_monthly_return(
         ).sum().sort_values()
     
     if small or large:
-        rank_market_capital_data = get_aggregate_data(
-            base_time=start_time, 
-            delta_time=-rank_time, 
-            calculate_label=market_capital_label
-        ).sum().sort_values()
+        if market_capital == "total":
+            rank_market_capital_data = get_aggregate_data(
+                base_time=start_time, 
+                delta_time=-rank_time, 
+                calculate_label=market_capital_label
+            ).sum().sort_values()
+        elif market_capital == "floating":
+            rank_market_capital_data = get_aggregate_data(
+                base_time=start_time, 
+                delta_time=-rank_time, 
+                calculate_label=floating_market_capital_label
+            ).sum().sort_values()
 
     # 选择投资组合。
     global portfolio_list
@@ -93,12 +103,20 @@ def get_strategy_monthly_return(
                 profit_list = list(rank_profit_data.index[:limit*multiplier])
             elif winner:
                 profit_list = list(rank_profit_data.index[-limit*multiplier:])
-            rank_market_capital_data = get_aggregate_data(
-                base_time=start_time, 
-                delta_time=-rank_time, 
-                calculate_label=market_capital_label, 
-                portfolio_list=profit_list
-            ).sum().sort_values()
+            if market_capital == "total":
+                rank_market_capital_data = get_aggregate_data(
+                    base_time=start_time, 
+                    delta_time=-rank_time, 
+                    calculate_label=market_capital_label, 
+                    portfolio_list=profit_list
+                ).sum().sort_values()
+            elif market_capital == "floating":
+                rank_market_capital_data = get_aggregate_data(
+                    base_time=start_time, 
+                    delta_time=-rank_time, 
+                    calculate_label=floating_market_capital_label, 
+                    portfolio_list=profit_list
+                ).sum().sort_values()
             if small:
                 portfolio_list = list(rank_market_capital_data.index[:limit])
             elif large:
