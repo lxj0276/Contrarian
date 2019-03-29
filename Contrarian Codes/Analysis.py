@@ -38,7 +38,8 @@ def analysis(
     transaction_cost=True, 
     performance_report=True, 
     store_data=False, 
-    stop_loss="none"
+    stop_loss="none", 
+    scale_down_trade_vol_par=0.88
 ):
     file_name = get_file_name(
         start=start, 
@@ -85,7 +86,6 @@ def analysis(
             if data.iloc[i-1, 0] < 0:
                 data.iloc[i, 0] = 0
     elif stop_loss == "trade_volume":
-        scale_down_trade_vol_par = 0.88
         data["MA3 of Trade Vol"] = data["Trade Volume"].rolling(3).apply(lambda x: np.mean(x), raw=True)
         for i in range(3, len(data)):
             if data["Trade Volume"].iloc[i-1] < scale_down_trade_vol_par * data["MA3 of Trade Vol"].iloc[i-1]:
