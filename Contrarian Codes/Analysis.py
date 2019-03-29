@@ -29,6 +29,7 @@ def analysis(
     start="2009-01", 
     end="2019-01", 
     ST=False, 
+    market_capital="total", 
     equity=True, 
     benchmark=True, 
     excess_return=True, 
@@ -48,7 +49,8 @@ def analysis(
         limit=limit, 
         priority=priority, 
         multiplier=multiplier, 
-        ST=ST
+        ST=ST, 
+        market_capital=market_capital
     )
     if os.path.isfile(path + "\\Contrarian Result\\%s.csv" % file_name):
         data = pd.read_csv(path + "\\Contrarian Result\\%s.csv" % file_name, index_col=[0])
@@ -66,7 +68,8 @@ def analysis(
             limit=limit, 
             priority=priority, 
             multiplier=multiplier, 
-            ST=ST
+            ST=ST, 
+            market_capital=market_capital
         )
     
     if benchmark:
