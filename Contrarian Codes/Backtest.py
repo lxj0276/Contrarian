@@ -65,7 +65,8 @@ def backtest(
     priority="market_capital", 
     multiplier=2, 
     ST=False, 
-    market_capital="total"
+    market_capital="total", 
+    trade_volume=False
 ):
     strategy_name = get_file_name(
         start=start, 
@@ -101,7 +102,9 @@ def backtest(
                 limit=limit, 
                 priority=priority, 
                 multiplier=multiplier, 
-                ST=ST
+                ST=ST, 
+                market_capital=market_capital, 
+                trade_volume=trade_volume
             )
             backtest_data = pd.concat(
                 [backtest_data, next_df], 

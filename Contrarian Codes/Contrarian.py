@@ -10,7 +10,6 @@ import itertools
 import pandas as pd
 from datetime import datetime as dt
 from dateutil.relativedelta import relativedelta
-from functools import partial
 
 raw_data = pd.read_csv(path + "\\Contrarian Data\\month\\month.csv")
 time_label = "Trdmnt"
@@ -45,7 +44,8 @@ def get_strategy_monthly_return(
     priority="market_capital", 
     multiplier=2, 
     ST=False, 
-    market_capital="total"
+    market_capital="total", 
+    trade_volume=False
 ):
 
     if loser or winner:
@@ -158,5 +158,15 @@ def get_strategy_monthly_return(
         )
     hold_return_data.index.name = "Month"
     hold_return_data.columns = ["Profit"]
+
+    if trade_volume:
+        rank_trade_volume = pd.DataFrame(get_aggregate_data(
+            base_time=start_time, 
+            delta_time=-rank_time, 
+            groupby_label=time_label, 
+            calculate_label=trade_volume_label, 
+            portfolio_list=portfolio_list
+        ).mean()).mean()[0]
+        hold_return_data["Trade Volume"] = list(itertools.repeat(rank_trade_volume, len(hold_return_data)))
 
     return hold_return_data

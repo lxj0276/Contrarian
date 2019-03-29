@@ -30,6 +30,7 @@ def analysis(
     end="2019-01", 
     ST=False, 
     market_capital="total", 
+    trade_volume=False, 
     equity=True, 
     benchmark=True, 
     excess_return=True, 
@@ -70,7 +71,8 @@ def analysis(
             priority=priority, 
             multiplier=multiplier, 
             ST=ST, 
-            market_capital=market_capital
+            market_capital=market_capital, 
+            trade_volume=trade_volume
         )
     
     # 止损降低波动率和风险。
