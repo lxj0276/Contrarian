@@ -1,7 +1,5 @@
 # Codes to ignore. 
-Contrarian Codes/Contrarian_old.py
-Contrarian Codes/Run.py
-Contrarian Codes/Debug.py
+Contrarian Codes/Working.py
 # Data to ignore. 
 Contrarian Data/day
 Contrarian Data/week
@@ -9,6 +7,5 @@ Contrarian Data/week
 Contrarian Result
 Contrarian Codes/Debug
 Contrarian Codes/__pycache__
-Contrarian Codes/Run
 # Filetype to ignore. 
 *.txt
