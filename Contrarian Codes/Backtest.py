@@ -92,7 +92,7 @@ def backtest(
     end_date = dt.strptime(end, '%Y-%m')
     time_span = relativedelta(end_date, start_date).years*12 + relativedelta(end_date, start_date).months
 
-    if not os.path.isfile(path + "\\Contrarian Result\\%s.csv" % strategy_name):
+    if not os.path.isfile(path + "\\Result\\%s.csv" % strategy_name):
         backtest_data = pd.DataFrame()
         for date in [(dt.strptime(start, '%Y-%m') + relativedelta(months=i)).strftime('%Y-%m') for i in range(0, time_span, hold_time)]:
             next_df = get_strategy_monthly_return(
@@ -115,10 +115,10 @@ def backtest(
                 axis=0
             )
     else:
-        backtest_data = pd.read_csv(path + "\\Contrarian Result\\%s.csv" % strategy_name, index_col=[0])
+        backtest_data = pd.read_csv(path + "\\Result\\%s.csv" % strategy_name, index_col=[0])
         backtest_data.index = pd.to_datetime(backtest_data.index, format='%Y-%m')
     
-    backtest_data.to_csv(path + "\\Contrarian Result\\%s.csv" % strategy_name)    
+    backtest_data.to_csv(path + "\\Result\\%s.csv" % strategy_name)    
     print("回测完成，收益率数据已保存在%s文件里。" % strategy_name)
 
     return backtest_data

@@ -57,8 +57,8 @@ def analysis(
         market_capital=market_capital, 
         trade_volume=trade_volume
     )
-    if os.path.isfile(path + "\\Contrarian Result\\%s.csv" % file_name):
-        data = pd.read_csv(path + "\\Contrarian Result\\%s.csv" % file_name, index_col=[0])
+    if os.path.isfile(path + "\\Result\\%s.csv" % file_name):
+        data = pd.read_csv(path + "\\Result\\%s.csv" % file_name, index_col=[0])
         data.index = pd.to_datetime(data.index)
     else:
         data = backtest(
@@ -111,7 +111,7 @@ def analysis(
             if "Benchmark Profit" in data.columns:
                 data["Benchmark Equity with Transaction Cost"] = ((data["Benchmark Profit"]+1) * 0.998**2).cumprod()
     if store_data: 
-        data.to_csv(path + "\\Contrarian Result\\%s Equity.csv" % file_name)
+        data.to_csv(path + "\\Result\\%s Equity.csv" % file_name)
     
     if performance_report:
         if transaction_cost:
