@@ -39,7 +39,7 @@ def get_file_name(
             strategy_name_list.append("Small")
         elif large:
             strategy_name_list.append("Large")
-    if (rank_time != 3) and (hold_time != 1):
+    if (rank_time != 3) or (hold_time != 1):
         strategy_name_list.append(str(rank_time) + "-" + str(hold_time))
     strategy_name_list.append(str(limit))
     if (loser or winner) and (small or large):
