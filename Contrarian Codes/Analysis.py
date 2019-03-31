@@ -8,13 +8,6 @@ import os; path = os.getcwd()
 from Backtest import get_file_name, backtest
 import pandas as pd
 import numpy as np
-import seaborn as sns
-sns.set(style="darkgrid")
-import matplotlib.pyplot as plt
-plt.rcParams['font.sans-serif'] = ['SimHei']
-plt.rcParams['axes.unicode_minus'] = False
-from pandas.plotting import register_matplotlib_converters
-register_matplotlib_converters()
 import ffn
 
 def analysis(
@@ -124,8 +117,8 @@ def analysis(
         elif stop_loss == "trade_volume":
             print("（策略经过交易量预测止损）")
         print("* 年化复合增长率为%s" % round(performance.cagr*100, 3) + "%。")
-        print("* 夏普值为%s。" % round(performance.daily_sharpe, 3))
-        print("* 波动率为%s" % round(performance.daily_vol*100, 3) + "%。")
+        print("* 日夏普比率为%s。" % round(performance.daily_sharpe, 3))
+        print("* 日波动率为%s" % round(performance.daily_vol*100, 3) + "%。")
         print("* 最大回撤为%s" % round(performance.max_drawdown*100, 3) + "%。")
         print("* 平均回撤为%s" % round(performance.avg_drawdown*100, 3) + "%。")
         print("* 平均回撤时间为%s" % round(performance.avg_drawdown_days, 3) + "天。")
