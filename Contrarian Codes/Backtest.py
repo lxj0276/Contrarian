@@ -62,7 +62,7 @@ def backtest(
     winner=False, 
     small=True, 
     large=False, 
-    rank_time=3, 
+    rank_time=6, 
     hold_time=1, 
     limit=100, 
     priority="market_capital", 
