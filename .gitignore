@@ -1,6 +1,4 @@
 # Codes to ignore. 
-Contrarian Codes/Contrarian_old.py
-Contrarian Codes/Debug.py
 Contrarian Codes/Execution.py
 # Data to ignore. 
 Contrarian Data/day
@@ -8,7 +6,7 @@ Contrarian Data/week
 # Folders to ignore
 Result
 Analysis
-Contrarian Codes/__pycache__
 Contrarian Codes/Debug
+Contrarian Codes/__pycache__
 # Filetype to ignore. 
 *.txt
